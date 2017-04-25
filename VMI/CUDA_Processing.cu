@@ -18,6 +18,19 @@
 /*----------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------*/
 
+
+/* struct used to compact the vector */
+struct non_negative
+{
+    __host__ __device__
+    bool operator()(const int x)
+    {
+        return x >= 0;
+    }
+};
+
+
+
 __global__ void InitParam(long *d_FrameParamPtr)
 {
     d_FrameParamPtr[6]=0; // number of counts per frame
@@ -26,151 +39,53 @@ __global__ void InitParam(long *d_FrameParamPtr)
 
 __global__ void ThresholdingData(unsigned char *src,unsigned int *srcAcc, long *d_FrameParamPtr,unsigned int *SSDataStream,unsigned int *SSIndexStream,unsigned int *BlockCountBuff,int t, unsigned char *d_BGCorr)
 {
-    int i=threadIdx.x+blockIdx.x*blockDim.x;
+    int id=threadIdx.x+blockIdx.x*blockDim.x;
+    int sid=threadIdx.x
     unsigned int BlockThreadoffset;
     unsigned int Blockoffset;
     __shared__ unsigned int BCB;
+    __shared__ unisgned int Datash[1000];
+
     BCB=BlockCountBuff[t];
 
     long SingleShotRecord=d_FrameParamPtr[7];
     int thresh=(int) d_FrameParamPtr[2];
     long counting_mode=d_FrameParamPtr[4];
-    
-    
-    //if(t==0 && d_FrameParamPtr[0]==0 && d_FrameParamPtr[5]%d_FrameParamPtr[1]==0){srcAcc[i]=0;}
 
-    //__syncthreads();
 
     /*--------------------------------------------------------------------------*/
-    /*--------------------------- BG SUBSTRACTION ------------------------------*/
+    /*------------------ LOAD ON SHARED MEM & BG SUBSTRACTION ------------------*/
     /*--------------------------------------------------------------------------*/
     
-    int u =(int) src[i]-(int) d_BGCorr[i];
-    if(u<0){src[i]=0;}
-    else{src[i]=(unsigned int) u;} 
-    
+    Datash[sid] =(int) src[id]-(int) d_BGCorr[id];
     __syncthreads();
 
     /*--------------------------------------------------------------------------*/
     /*--------------------------- THRESHOLDING DATA ----------------------------*/
     /*--------------------------------------------------------------------------*/
 
-    if(src[i]<thresh)
+    if(Datash[sid]<thresh)
     {
-        src[i]=0;
-        __syncthreads();
-     
+        Datash[sid]=0;
     }
-    else{src[i]=src[i]-(thresh-1);__syncthreads();}
-    
     __syncthreads();
-    
-    /*--------------------------------------------------------------------------------*/
-    /*---------------------------END OF THRESHOLDING DATA ----------------------------*/
-    /*--------------------------------------------------------------------------------*/
-    
-    /*-----------------------------------------------------------------------------*/
-    /*---------------------------- CENTROIDING THE DATA ---------------------------*/
-    /*-----------------------------------------------------------------------------*/
-    
-    if(counting_mode==1)
+
+
+    /*------------------------------------------------------------------------------------*/
+    /*------------------ SAVE IN GLOBAL MEM & ACCUMULATE DATA ON FRAME -------------------*/
+    /*------------------------------------------------------------------------------------*/
+
+    src[id]=Datash[sid];
+    __syncthreads();
+
+
+    if(SingleShotRecord==0)
     {
-        bool MaxPixl=0;
-        int NcountFrame=0;
-        //////////////////////////////////////////////////
-        // block    -3   -2    1    0    1    2    3    //
-        // thread                                       //
-        //   -3                    im3                  //
-        //   -2               hm2  im2  jm1             //
-        //   -1          gm1  hm1  im1  jm1  km1        //
-        //    0      f    g    h    i    j    k    l    //
-        //    1          gp1  hp1  ip1  jp1  kp1        //
-        //    2               hp2  ip2  jp2             //
-        //    3                    ip3                  //
-        //////////////////////////////////////////////////
-        
-    
-        if (threadIdx.x > 2 || blockIdx.x > 2 || threadIdx.x <(blockDim.x-2) || blockIdx.x < (blockDim.x-2) )
-        {
-            
-               int ip1=(threadIdx.x+1)+blockIdx.x*blockDim.x;
-               //int ip2=(threadIdx.x+2)+blockIdx.x*blockDim.x;
-               //int ip3=(threadIdx.x+3)+blockIdx.x*blockDim.x;
-               int im1=(threadIdx.x-1)+blockIdx.x*blockDim.x;
-               //int im2=(threadIdx.x-2)+blockIdx.x*blockDim.x;
-               //int im3=(threadIdx.x-3)+blockIdx.x*blockDim.x;
-             
-               int h=threadIdx.x+(blockIdx.x-1)*blockDim.x;
-               int hp1=(threadIdx.x+1)+(blockIdx.x-1)*blockDim.x;
-               //int hp2=(threadIdx.x+2)+(blockIdx.x-1)*blockDim.x;
-               int hm1=(threadIdx.x-1)+(blockIdx.x-1)*blockDim.x;
-               //int hm2=(threadIdx.x-2)+(blockIdx.x-1)*blockDim.x;
-             
-               int j=threadIdx.x+(blockIdx.x+1)*blockDim.x;
-               int jp1=(threadIdx.x+1)+(blockIdx.x+1)*blockDim.x;
-               //int jp2=(threadIdx.x+1)+(blockIdx.x+1)*blockDim.x;
-               int jm1=(threadIdx.x-1)+(blockIdx.x+1)*blockDim.x;
-               //int jm2=(threadIdx.x+1)+(blockIdx.x+1)*blockDim.x;
-             
-               //int k=threadIdx.x+(blockIdx.x+2)*blockDim.x;
-               //int kp1=(threadIdx.x+1)+(blockIdx.x+2)*blockDim.x;
-               //int km1=(threadIdx.x-1)+(blockIdx.x+2)*blockDim.x;
-             
-               //int g=threadIdx.x+(blockIdx.x-2)*blockDim.x;
-               //int gp1=(threadIdx.x+1)+(blockIdx.x-2)*blockDim.x;
-               //int gm1=(threadIdx.x-1)+(blockIdx.x-2)*blockDim.x;
-              
-               //int l=threadIdx.x+(blockIdx.x+3)*blockDim.x;
-              
-               //int f=threadIdx.x+(blockIdx.x-3)*blockDim.x;
-              
-             /* char C=src[i];*/
-                if(src[i]>src[ip1] && src[i]>src[im1] && src[i]>src[j] && src[i]>src[jp1] && src[i]>src[jm1] && src[i]>src[h] && src[i]>src[hp1] && src[i]>src[hm1])
-                {
-                	MaxPixl=true;
-                   // NcountFrame+=1;
-                    d_FrameParamPtr[6]+=1;
-                }
-                else
-                {
-                    MaxPixl=false;
-                }
-            
-        }
-        else
-        {
-            MaxPixl=false;
-        }
+        srcAcc[id]+=Datash[sid];
         __syncthreads();
 
-        //if(i==1){d_FrameParamPtr[6]=NcountFrame;} // only one thread writes down the number of counts
-
-        if(MaxPixl==true)
-        {
-            src[i]=1;
-        }
-        else
-        {
-            src[i]=0;
-        }
-         __syncthreads();
     }
-    
-    /*------------------------------------------------------------------------------------*/
-    /*---------------------------- END OF CENTROIDING THE DATA ---------------------------*/
-    /*------------------------------------------------------------------------------------*/
 
-    /*------------------------------------------------------------------------------------*/
-    /*----------------------------- ACCUMULATE DATA ON FRAME -----------------------------*/
-    /*------------------------------------------------------------------------------------*/
-
-    //if(t==0){
-
-        srcAcc[i]=srcAcc[i]+(unsigned int) src[i];
-        __syncthreads();
-    
-    //}
-   
     /*------------------------------------------------------------------------------------*/
     /*-------------------------- END OF ACCUMULATE DATA ON FRAME -------------------------*/
     /*------------------------------------------------------------------------------------*/
@@ -179,7 +94,7 @@ __global__ void ThresholdingData(unsigned char *src,unsigned int *srcAcc, long *
     /*------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
     /*------------------------- VECTOR COMPACTION IN THE KERNEL (ref D.M. Hughes & al. Computer Graphics forum, Vol 32, iss 6, p178-188 (2013)) ------------------------*/
     /*------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-    if(SingleShotRecord==1)
+    if(SingleShotRecord==2)
     {
     __shared__ unsigned int W[25];          // array of warp offsets (for 800 threads/block -> 25 warps)
     
@@ -374,6 +289,16 @@ cudaError_t CUDAProcessingData(unsigned char **h_StreamPtr, unsigned int **d_SSD
 
                 InitParam<<<1,1,0,stream[0]>>>(d_FrameParamPtr);
                 ThresholdingData<<<grid,threads,0,stream[t]>>>(d_FramePtr,d_PicturePtr,d_FrameParamPtr,d_SSDataStream_ptr[t],d_SSIndexStream_ptr[t],d_BlockCountBuff,t,d_BGCorr);     // Call thresholding data with number of blocks
+                if(h_FrameParamPtr[7]==1)
+                {
+                    int *vec_compact, *idx_compact;
+                    thrust::copy_if(thrust::cuda::par.on(stream[0]), d_FramePtr, d_FramePtr + this->vocab_size , vec_compact, non_negative());
+                    //thrust::copy_if(thrust::cuda::par.on(stream[0]), d_FrameIdxPtr, d_FrameIdxPtr + this->vocab_size , idx_compact, non_negative());
+                    free(vec_compact);
+                    free(idx_compact);
+
+                }
+
                 //cudaThreadSynchronize();
                 cudaEventRecord(event[h_FrameParamPtr[1]],stream[0]);
             }
@@ -387,6 +312,14 @@ cudaError_t CUDAProcessingData(unsigned char **h_StreamPtr, unsigned int **d_SSD
                 cudaStreamWaitEvent(stream[t],event[t+1],0);
                 InitParam<<<1,1,0,stream[t]>>>(d_FrameParamPtr);
                 ThresholdingData<<<grid,threads,0,stream[t]>>>(d_FramePtr,d_PicturePtr,d_FrameParamPtr,d_SSDataStream_ptr[t],d_SSIndexStream_ptr[t],d_BlockCountBuff,t,d_BGCorr);     // Call thresholding data with number of blocks
+                if(h_FrameParamPtr[7]==1)
+                {
+                    int *vec_compact, *idx_compact;
+                    thrust::copy_if(thrust::cuda::par.on(stream[t]), d_FramePtr, d_FramePtr + this->vocab_size , vec_compact, non_negative());
+                    //thrust::copy_if(thrust::cuda::par.on(stream[t]), d_FrameIdxPtr, d_FrameIdxPtr + this->vocab_size , idx_compact, non_negative());
+                    free(vec_compact);
+                    free(idx_compact);
+                }
                 //cudaThreadSynchronize();
                 cudaEventRecord(event[t+h_FrameParamPtr[1]],stream[t]);
             }
@@ -406,6 +339,17 @@ cudaError_t CUDAProcessingData(unsigned char **h_StreamPtr, unsigned int **d_SSD
         
                 InitParam<<<1,1,0,stream[0]>>>(d_FrameParamPtr);
                 ThresholdingData<<<grid,threads,0,stream[t]>>>(d_FramePtr,d_PicturePtr,d_FrameParamPtr,d_SSDataStream_ptr[t],d_SSIndexStream_ptr[t],d_BlockCountBuff,t,d_BGCorr);     // Call thresholding data with number of blocks
+
+                // Save data in case of single shot
+                if(h_FrameParamPtr[7]==1)
+                {
+                    int *vec_compact, *idx_compact;
+                    thrust::copy_if(thrust::cuda::par.on(stream[0]), d_FramePtr, d_FramePtr + this->vocab_size , vec_compact, non_negative());
+                    //thrust::copy_if(thrust::cuda::par.on(stream[0]), d_FrameIdxPtr, d_FrameIdxPtr + this->vocab_size , idx_compact, non_negative());
+                    free(vec_compact);
+                    free(idx_compact);
+
+                }
                 //cudaThreadSynchronize();
                 cudaEventRecord(event[5],stream[0]);
             }
@@ -419,6 +363,14 @@ cudaError_t CUDAProcessingData(unsigned char **h_StreamPtr, unsigned int **d_SSD
                 cudaStreamWaitEvent(stream[t],event[t+1],0);
                 InitParam<<<1,1,0,stream[t]>>>(d_FrameParamPtr);
                 ThresholdingData<<<grid,threads,0,stream[t]>>>(d_FramePtr,d_PicturePtr,d_FrameParamPtr,d_SSDataStream_ptr[t],d_SSIndexStream_ptr[t],d_BlockCountBuff,t,d_BGCorr);     // Call thresholding data with number of blocks
+                if(h_FrameParamPtr[7]==1)
+                {
+                    int *vec_compact, *idx_compact;
+                    thrust::copy_if(thrust::cuda::par.on(stream[t]), d_FramePtr, d_FramePtr + this->vocab_size , vec_compact, non_negative());
+                    //thrust::copy_if(thrust::cuda::par.on(stream[t]), d_FrameIdxPtr, d_FrameIdxPtr + this->vocab_size , idx_compact, non_negative());
+                    free(vec_compact);
+                    free(idx_compact);
+                }
                 //cudaThreadSynchronize();
                 cudaEventRecord(event[t+5],stream[t]);
             }
