@@ -1,0 +1,13 @@
+﻿Build started 14/11/2016 09:16:05.
+     1>Project "C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\VMIcrtl_lib\VMIcrtl_lib\VMIcrtl_lib.vcxproj" on node 2 (build target(s)).
+     1>InitializeBuildStatus:
+         Touching "x64\Release\VMIcrtl_ext.unsuccessfulbuild".
+       ClCompile:
+         c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\x86_amd64\CL.exe /c /Zi /nologo /W1 /WX- /O2 /D _WINDLL /Gm- /EHsc /MD /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"x64\Release\\" /Fd"x64\Release\vc100.pdb" /Gd /TP /errorReport:prompt ..\..\VMIcrtl_ext.cpp
+         VMIcrtl_ext.cpp
+     1>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\include\thrust\host_vector.h(24): fatal error C1083: Cannot open include file: 'thrust/detail/config.h': No such file or directory
+     1>Done Building Project "C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\VMIcrtl_lib\VMIcrtl_lib\VMIcrtl_lib.vcxproj" (build target(s)) -- FAILED.
+
+Build FAILED.
+
+Time Elapsed 00:00:00.76

@@ -1,0 +1,14 @@
+﻿Build started 13/11/2016 18:47:18.
+     1>Project "C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\VMIcrtl_lib\VMIcrtl_lib\VMIcrtl_lib.vcxproj" on node 2 (build target(s)).
+     1>InitializeBuildStatus:
+         Touching "Debug\VMIcrtl_lib.unsuccessfulbuild".
+       ClCompile:
+         All outputs are up-to-date.
+       Link:
+         c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\VMIcrtl_lib\Debug\VMIcrtl_lib.dll" /NOLOGO /LIBPATH:"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\lib\x64" /LIBPATH:"C:\local\boost_1_62_0\lib64-msvc-10.0" /LIBPATH:C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\VMIacqPrg_v3Feb2016 /LIBPATH:C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI fglib5.lib clsersis.lib cudart.lib cudadevrt.lib "boost_python-vc100-mt-1_62.lib" python27.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"Debug\VMIcrtl_lib.dll.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\VMIcrtl_lib\Debug\VMIcrtl_lib.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\VMIcrtl_lib\Debug\VMIcrtl_lib.lib" /MACHINE:X64 /DLL Debug\VMIcrtl.obj
+     1>Debug\VMIcrtl.obj : fatal error LNK1112: module machine type 'X86' conflicts with target machine type 'x64'
+     1>Done Building Project "C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\VMIcrtl_lib\VMIcrtl_lib\VMIcrtl_lib.vcxproj" (build target(s)) -- FAILED.
+
+Build FAILED.
+
+Time Elapsed 00:00:00.45

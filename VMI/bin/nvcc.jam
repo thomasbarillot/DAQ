@@ -1,0 +1,10 @@
+import type ;
+type.register CUDA : cu ;
+
+import generators ;
+generators.register-standard nvcc.compile : CUDA : OBJ ;
+
+actions compile
+{
+    nvcc -arch=sm_30 -Xcompiler -fPIC -c -o CUDA_Processing.o CUDA_Processing.cu -lcudadevrt -lcudart -I. -IC:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\include -LC:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\lib\x64 -o $(<) -c $(>)
+}
