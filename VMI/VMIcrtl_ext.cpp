@@ -71,6 +71,7 @@ private:
     
     std::string Logfilename;        // Logfile
 	std::string Filename;
+    std::string SSFilename;         //single shot filename
 	
 	/*---- Camera and FrameGrabber properties ---*/
     
@@ -239,6 +240,7 @@ VMIcrtl::VMIcrtl()
 	
 	Logfilename="TimeStampsLog.log";
     Filename="20000000_0000.dat";
+    SSFilename="Specmat";
 	
     /*---- Clean memory just in case ----*/
     
@@ -724,11 +726,18 @@ void VMIcrtl::GetFrameImage()
     
     int count=0;
     frameindex_t PreviousImageNumber=0;
+    std::ofstream SSoutputfile;
+    SSoutputfile.open(SSFilename+"_"+std::to_string(count)+".dat");
     
     //*// LOOP WHILE THE TOTAL AMOUNT OF FRAMES CHOSEN IS NOT REACHED //*//
     Fg_setFlash(fg,trigger_strobeon,0);
     while(count<Frame_Parametersptr[1]) 
-    { 
+    {
+        if(count > 0 && count % 1000==0)
+        {
+            SSoutputfile.close()
+            SSoutputfile.open(SSFilename+"_"+std::to_string(count)+".dat");
+        }
         if(IFG_ACQ_IS_ACTIVE==false){break;}//Fg_Acq_thread->Interruption_point();}
         frameindex_t ImNum = Fg_getImage(fg, SEL_ACT_IMAGE,10,0, 10);
         frameindex_t ImNum2 = Fg_getStatus(fg, NUMBER_OF_GRABBED_IMAGES,1,0);
@@ -749,7 +758,7 @@ void VMIcrtl::GetFrameImage()
                 memmove(h_StreamPtr[j],(unsigned char*)Fg_getImagePtrEx(fg,LastImageNumber,0,memhdr),M_WIDTH*M_HEIGHT);
 				}
                 //*// PARALLEL TREATEMENT OF EACH FRAME //*//
-                cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr,mexVMIcrtlLog);
+                cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr,SSoutputfile);
                 count+=Frame_Parametersptr[1];
                 
 			}
@@ -771,7 +780,7 @@ void VMIcrtl::GetFrameImage()
             }
             
             //*// PARALLEL TREATEMENT OF EACH FRAME //*//
-            cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr,mexVMIcrtlLog);
+            cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr,SSoutputfile);
           
             count +=5;
             Frame_Parametersptr[8]=(long) count;
