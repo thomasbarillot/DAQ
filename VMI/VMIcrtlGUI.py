@@ -448,7 +448,7 @@ class MainWindow():
                 #DscanDisplay.setImage(self.imgDscan,autoLevels=False,autoHistogramRange=False)
             self.Dcounts=np.round(100*i/len(delayvals))
         
-        Sa
+
         
         
     def StopAcq(self):

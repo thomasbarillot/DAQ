@@ -66,12 +66,11 @@ __global__ void ThresholdingData(unsigned char *src,unsigned int *srcAcc, long *
     __syncthreads();
 
 
-    if(SingleShotRecord==0)
-    {
-        srcAcc[id]+=Datash[sid];
-        __syncthreads();
-
-    }
+    //if(SingleShotRecord==0)
+    //{
+    srcAcc[id]+=Datash[sid];
+    __syncthreads();
+    //}
 
     /*------------------------------------------------------------------------------------*/
     /*-------------------------- END OF ACCUMULATE DATA ON FRAME -------------------------*/
@@ -181,7 +180,7 @@ cudaError_t CUDAbackgroundFrameToGPU(unsigned char *h_BGCorr, unsigned char *d_B
     return cudaStatus;
 }
 
-cudaError_t CUDAProcessingData(unsigned char **h_StreamPtr, unsigned int **d_SSDataStream_ptr, unsigned int **d_SSIndexStream_ptr,unsigned int *SharedMem, unsigned char *d_FramePtr,  unsigned int *d_PicturePtr, int Nbytes, long *h_FrameParamPtr, long *d_FrameParamPtr, unsigned char *d_BGCorr,std::ofstream SSofile)
+cudaError_t CUDAProcessingData(unsigned char **h_StreamPtr, unsigned int **d_SSDataStream_ptr, unsigned int **d_SSIndexStream_ptr,unsigned int *SharedMem, unsigned char *d_FramePtr,  unsigned int *d_PicturePtr, int Nbytes, long *h_FrameParamPtr, long *d_FrameParamPtr, unsigned char *d_BGCorr)
 {
     cudaError_t cudaStatus;
     
@@ -235,10 +234,14 @@ cudaError_t CUDAProcessingData(unsigned char **h_StreamPtr, unsigned int **d_SSD
                 ThresholdingData<<<grid,threads,0,stream[t]>>>(d_FramePtr,d_PicturePtr,d_FrameParamPtr,d_SSDataStream_ptr[t],d_SSIndexStream_ptr[t],d_BlockCountBuff,t,d_BGCorr);     // Call thresholding data with number of blocks
                 if(h_FrameParamPtr[7]==1)
                 {
-                    thrust::device_ptr<int> d_FramePtrVec = thrust::device_pointer_cast(d_FramePtr);
-                    thrust::copy_if(thrust::cuda::par, d_FramePtrVec, d_FramePtrVec + 400*400 , ostream_iterator<int>(SSofile, "\n"), is_not_zero());
-                    //thrust::copy_if(thrust::cuda::par, d_FrameIdxPtrVec, d_FrameIdxPtrVec + 400*400 , ostream_iterator<int>(SSofile, "\n"), is_not_zero());
-
+                    thrust::device_ptr<unsigned char> d_FramePtrVec = thrust::device_pointer_cast(d_FramePtr);
+					thrust::device_vector<unsigned char> d_FrameVecCompact(Nbytes);
+                    auto result_end=thrust::copy_if(d_FramePtrVec, d_FramePtrVec+400*400,d_FrameVecCompact.begin(),is_not_zero());
+					thrust::host_vector<unsigned char> h_FrameVecCompact(d_FrameVecCompact.begin(),result_end);
+					//thrust::copy(h_FrameVecCompact.begin(),h_FrameVecCompact.end(),std::ostream_iterator<unsigned char>(SSofile, "\n"));
+					//thrust::copy_if(d_FramePtrVec-, d_FramePtrVec + 400*400 , std::ostream_iterator<unsigned char>(SSofile, "\n"));
+                    //thrust::copy_if(thrust::cuda::par, d_FrameIdxPtrVec, d_FrameIdxPtrVec + 400*400 , std::ostream_iterator<int>(SSofile, "\n"), is_not_zero());
+					
                 }
 
                 //cudaThreadSynchronize();
@@ -256,10 +259,11 @@ cudaError_t CUDAProcessingData(unsigned char **h_StreamPtr, unsigned int **d_SSD
                 ThresholdingData<<<grid,threads,0,stream[t]>>>(d_FramePtr,d_PicturePtr,d_FrameParamPtr,d_SSDataStream_ptr[t],d_SSIndexStream_ptr[t],d_BlockCountBuff,t,d_BGCorr);     // Call thresholding data with number of blocks
                 if(h_FrameParamPtr[7]==1)
                 {
-                    thrust::device_ptr<int> d_FramePtrVec = thrust::device_pointer_cast(d_FramePtr);
-                    thrust::copy_if(thrust::cuda::par, d_FramePtrVec, d_FramePtrVec + 400*400 , ostream_iterator<int>(SSofile, "\n"), is_not_zero());
-                    //thrust::copy_if(thrust::cuda::par, d_FrameIdxPtrVec, d_FrameIdxPtrVec + 400*400 , ostream_iterator<int>(SSofile, "\n"), is_not_zero());
-
+                    thrust::device_ptr<unsigned char> d_FramePtrVec = thrust::device_pointer_cast(d_FramePtr);
+					thrust::device_vector<unsigned char> d_FrameVecCompact(Nbytes);
+                    auto result_end=thrust::copy_if(d_FramePtrVec, d_FramePtrVec+400*400,d_FrameVecCompact.begin(),is_not_zero());
+					thrust::host_vector<unsigned char> h_FrameVecCompact(d_FrameVecCompact.begin(),result_end);
+					
                 }
                 //cudaThreadSynchronize();
                 cudaEventRecord(event[t+h_FrameParamPtr[1]],stream[t]);
@@ -284,12 +288,10 @@ cudaError_t CUDAProcessingData(unsigned char **h_StreamPtr, unsigned int **d_SSD
                 // Save data in case of single shot
                 if(h_FrameParamPtr[7]==1)
                 {
-                    int *vec_compact;
-					int *idx_compact;
-                    //thrust::copy_if(thrust::cuda::par(stream[0]), d_FramePtr, d_FramePtr + this->vocab_size , vec_compact, non_negative());
-                    //thrust::copy_if(thrust::cuda::par(stream[0]), d_FrameIdxPtr, d_FrameIdxPtr + this->vocab_size , idx_compact, non_negative());
-                    free(vec_compact);
-                    free(idx_compact);
+					thrust::device_ptr<unsigned char> d_FramePtrVec = thrust::device_pointer_cast(d_FramePtr);
+					thrust::device_vector<unsigned char> d_FrameVecCompact(Nbytes);
+                    auto result_end=thrust::copy_if(thrust::cuda::par,d_FramePtrVec, d_FramePtrVec+400*400,d_FrameVecCompact.begin(),is_not_zero());
+					thrust::host_vector<unsigned char> h_FrameVecCompact(d_FrameVecCompact.begin(),result_end);
 
                 }
                 //cudaThreadSynchronize();
@@ -307,12 +309,10 @@ cudaError_t CUDAProcessingData(unsigned char **h_StreamPtr, unsigned int **d_SSD
                 ThresholdingData<<<grid,threads,0,stream[t]>>>(d_FramePtr,d_PicturePtr,d_FrameParamPtr,d_SSDataStream_ptr[t],d_SSIndexStream_ptr[t],d_BlockCountBuff,t,d_BGCorr);     // Call thresholding data with number of blocks
                 if(h_FrameParamPtr[7]==1)
                 {
-                    int *vec_compact;
-					int *idx_compact;
-                    //thrust::copy_if(thrust::cuda::par(stream[t]), d_FramePtr, d_FramePtr + this->vocab_size , vec_compact, non_negative());
-                    //thrust::copy_if(thrust::cuda::par(stream[t]), d_FrameIdxPtr, d_FrameIdxPtr + this->vocab_size , idx_compact, non_negative());
-                    free(vec_compact);
-                    free(idx_compact);
+					thrust::device_ptr<unsigned char> d_FramePtrVec = thrust::device_pointer_cast(d_FramePtr);
+					thrust::device_vector<unsigned char> d_FrameVecCompact(Nbytes);
+                    auto result_end=thrust::copy_if(d_FramePtrVec, d_FramePtrVec+400*400,d_FrameVecCompact.begin(),is_not_zero());
+					thrust::host_vector<unsigned char> h_FrameVecCompact(d_FrameVecCompact.begin(),result_end);
                 }
                 //cudaThreadSynchronize();
                 cudaEventRecord(event[t+5],stream[t]);

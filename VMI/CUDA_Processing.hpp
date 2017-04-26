@@ -16,6 +16,7 @@
 #include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\include\thrust\copy.h>
 #include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\include\thrust\execution_policy.h>
 #include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\include\thrust\device_ptr.h>
+#include <iterator>
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>

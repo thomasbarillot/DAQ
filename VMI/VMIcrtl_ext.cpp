@@ -23,14 +23,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fstream> // include i/o streams to file
+#include <sstream>
 #include <cmath> // 
 
-#include "C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\VMIacqPrg_v3Feb2016\include\fgrab_struct.h"
-#include "C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\VMIacqPrg_v3Feb2016\include\fgrab_prototyp.h"
-#include "C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\VMIacqPrg_v3Feb2016\include\fgrab_define.h"
-#include "C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\VMIacqPrg_v3Feb2016\include\SisoDisplay.h"
-#include "C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\VMIacqPrg_v3Feb2016\include\clser.h"
-#include "C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\CUDA_Processing.hpp"
+#include "C:\Users\Administrator\Documents\PythonRepositories_Tom\DAQ\VMI\include\fgrab_struct.h"
+#include "C:\Users\Administrator\Documents\PythonRepositories_Tom\DAQ\VMI\include\fgrab_prototyp.h"
+#include "C:\Users\Administrator\Documents\PythonRepositories_Tom\DAQ\VMI\include\fgrab_define.h"
+#include "C:\Users\Administrator\Documents\PythonRepositories_Tom\DAQ\VMI\include\SisoDisplay.h"
+#include "C:\Users\Administrator\Documents\PythonRepositories_Tom\DAQ\VMI\include\clser.h"
+#include "C:\Users\Administrator\Documents\PythonRepositories_Tom\DAQ\VMI\CUDA_Processing.hpp"
 
 #include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\include\cuda.h>
 #include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\include\cuda_runtime.h>
@@ -193,7 +194,7 @@ public:
     void setThreshold(int);
     void setMedianFilter(int);
     void setNbAcq(int);
-    void setCentroiding(int);
+    void setSingleShot(int);
     void setTriggerMode(unsigned int);
     void setExposure(int);
     
@@ -629,7 +630,7 @@ void VMIcrtl::GetFrameImagePrev()
 					{		
 						timestamp=Fg_getImageEx(fg,SEL_NUMBER,LastImageNumber,0,0,memhdr);
                         Fg_getParameterEx(fg,FG_TIMESTAMP,&timestamp,0,memhdr,LastImageNumber);
-                        mexVMIcrtlLog<<"TS:"<<timestamp<<"\n";
+                        mexVMIcrtlLog<<timestamp<<"\n";
 						//mexVMIcrtlLog<<"Bufnum"<<timestamp<<" frame number"<<LastImageNumber<<"\n";
 						memmove(h_StreamPtr[j],(unsigned char*)Fg_getImagePtrEx(fg,LastImageNumber,0,memhdr),M_WIDTH*M_HEIGHT);
 					
@@ -643,7 +644,7 @@ void VMIcrtl::GetFrameImagePrev()
 				try
 				{
 	
-					cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr,mexVMIcrtlLog);
+					cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr);
 					count+=Frame_Parametersptr[1];
                     if (cudaStatus != cudaSuccess){throw cudaGetErrorString(cudaStatus);}
 
@@ -667,7 +668,7 @@ void VMIcrtl::GetFrameImagePrev()
 					
 					timestamp=LastImageNumber-i;
 					Fg_getParameterEx(fg,FG_TIMESTAMP,&timestamp,0,memhdr,LastImageNumber-i);
-					mexVMIcrtlLog<<"TS:"<<timestamp<<"\n";
+					mexVMIcrtlLog<<timestamp<<"\n";
 					memmove(h_StreamPtr[i],(unsigned char*)Fg_getImagePtrEx(fg,LastImageNumber-i,0,memhdr),M_WIDTH*M_HEIGHT);
 						
 				}
@@ -681,7 +682,7 @@ void VMIcrtl::GetFrameImagePrev()
 			try
 			{
 
-				cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr,mexVMIcrtlLog);
+				cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr);
                 if (cudaStatus != cudaSuccess){throw cudaGetErrorString(cudaStatus);}				
 
 			}
@@ -718,32 +719,32 @@ void VMIcrtl::GetFrameImage()
 {
     LARGE_INTEGER start1, end1, start2, end2, clockFrequency;
 	
-    QueryPerformanceFrequency(&clockFrequency);
-
+    
     cudaError_t cudaStatus;
     
     unsigned int timestamp;
-    
+	//std::ofstream SSoutputfile;
+
     int count=0;
     frameindex_t PreviousImageNumber=0;
-    if(Frame_Parametersptr[7]==1)
-    {
-        std::ofstream SSoutputfile;
-        SSoutputfile.open(SSFilename+"_"+std::to_string(count)+".dat");
-    }
+    
+		//i2s<<count;
+    //SSoutputfile.open(SSFilename);
+    
     
     //*// LOOP WHILE THE TOTAL AMOUNT OF FRAMES CHOSEN IS NOT REACHED //*//
     Fg_setFlash(fg,trigger_strobeon,0);
     while(count<Frame_Parametersptr[1]) 
     {
-        if(Frame_Parametersptr[7]==1)
+        /*if(Frame_Parametersptr[7]==1)
         {
             if(count > 0 && count % 1000==0)
             {
-                SSoutputfile.close()
-                SSoutputfile.open(SSFilename+"_"+std::to_string(count)+".dat");
+                SSoutputfile.close();
+				//i2s<<count;
+                SSoutputfile.open(SSFilename);
             }
-        }
+        }*/
         if(IFG_ACQ_IS_ACTIVE==false){break;}//Fg_Acq_thread->Interruption_point();}
         frameindex_t ImNum = Fg_getImage(fg, SEL_ACT_IMAGE,10,0, 10);
         frameindex_t ImNum2 = Fg_getStatus(fg, NUMBER_OF_GRABBED_IMAGES,1,0);
@@ -762,12 +763,12 @@ void VMIcrtl::GetFrameImage()
                 Fg_getParameterEx(fg,FG_TIMESTAMP,&timestamp,0,memhdr,LastImageNumber);
                 if(Frame_Parametersptr[7]==1)
                 {
-                    SSoutputfile<<"TS:"<<timestamp<<"\n";
+                    //SSoutputfile<<"TS:"<<timestamp<<"\n";
                 }
                 memmove(h_StreamPtr[j],(unsigned char*)Fg_getImagePtrEx(fg,LastImageNumber,0,memhdr),M_WIDTH*M_HEIGHT);
 				}
                 //*// PARALLEL TREATEMENT OF EACH FRAME //*//
-                cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr,SSoutputfile);
+                cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr);
                 count+=Frame_Parametersptr[1];
                 
 			}
@@ -786,23 +787,25 @@ void VMIcrtl::GetFrameImage()
             Fg_getParameterEx(fg,FG_TIMESTAMP,&timestamp,0,memhdr,LastImageNumber-i);
             if(Frame_Parametersptr[7]==1)
             {
-                SSoutputfile<<"TS:"<<timestamp<<"\n";
+                //SSoutputfile<<"TS:"<<timestamp<<"\n";
             }
             memmove(h_StreamPtr[i],(unsigned char*)Fg_getImagePtrEx(fg,LastImageNumber-i,0,memhdr),M_WIDTH*M_HEIGHT);
             }
             
             //*// PARALLEL TREATEMENT OF EACH FRAME //*//
-            cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr,SSoutputfile);
+            cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr);
           
             count +=5;
             Frame_Parametersptr[8]=(long) count;
             PreviousImageNumber=LastImageNumber;
-			
         }
 		
 		Fg_setStatus(fg, FG_UNBLOCK_ALL,1,0);
         
     }
+    
+    //SSoutputfile.close();
+    
     Fg_setFlash(fg,trigger_strobeoff,0); /* stop the trigger to the digitizer */
  
     IFG_ACQ_IS_DONE=true; 
