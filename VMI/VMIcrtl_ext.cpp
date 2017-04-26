@@ -471,16 +471,6 @@ VMIcrtl::VMIcrtl()
 VMIcrtl::~VMIcrtl()
 {
 	delete img_ptr;
-    
-	//try 
-	//{
-		//mexVMIcrtlLog.close();
-	//}
-	//catch (int e)
-	//{
-	//	printf(" Stream to logfile already closed");
-	//}
-	
 }
 
 void VMIcrtl::SetAcquisitionParameters(int* Ptr1)
@@ -582,9 +572,6 @@ void VMIcrtl::StartAcquisitionPrev()
 //    mexVMIcrtlLog<<"Aquisition started?:"<<Fg_getLastErrorDescription(fg)<<" "<<Fg_getLastErrorNumber(fg)<<"\n";
     //mexVMIcrtlLog<<"Aquisition started?:"<<acqstart<<" (0=OK) \n";
     
-//    mexVMIcrtlLog<<"Frames per seconds:"<<FramePerSec<<"\n";
-    
-    
     /* Grab the frames in a separate thread*/
     try
     {
@@ -594,24 +581,14 @@ void VMIcrtl::StartAcquisitionPrev()
     }
     catch (int e)
     {
-        
-//        mexVMIcrtlLog.close();
-    
         delete [] pAcq;
     }
-    
-    
-    
 }
 
 /* This function transfers grabbed frames for display */
 
 void VMIcrtl::GetFrameImagePrev()
 {
-     /*LARGE_INTEGER clockFrequency;
-     LARGE_INTEGER start;
-     LARGE_INTEGER end;
-     QueryPerformanceFrequency(&clockFrequency);*/
     std::ofstream mexVMIcrtlLog;
 	mexVMIcrtlLog.open(Logfilename);
 
@@ -664,7 +641,7 @@ void VMIcrtl::GetFrameImagePrev()
 				try
 				{
 	
-					cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr);
+					cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr,mexVMIcrtlLog);
 					count+=Frame_Parametersptr[1];
                     if (cudaStatus != cudaSuccess){throw cudaGetErrorString(cudaStatus);}
 
@@ -679,8 +656,6 @@ void VMIcrtl::GetFrameImagePrev()
         {
 
             Frame_Parametersptr[5]=LastImageNumber; //*// SAVE NUMBER OF LAST FRAME GRABBED //*//
-            
-            //QueryPerformanceCounter(&start);
             
             for(int i=0;i<5;i++)
             {
@@ -704,7 +679,7 @@ void VMIcrtl::GetFrameImagePrev()
 			try
 			{
 
-				cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr);
+				cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr,mexVMIcrtlLog);
                 if (cudaStatus != cudaSuccess){throw cudaGetErrorString(cudaStatus);}				
 
 			}
@@ -713,19 +688,9 @@ void VMIcrtl::GetFrameImagePrev()
 //				mexVMIcrtlLog<<"ERROR: Cuda failed: "<<cudaerror<<"\n";
 			}
             
-			
-            
             count +=5;
             Frame_Parametersptr[8]=(long) count;
             PreviousImageNumber=LastImageNumber;
-            
-			
-            //if(LastImageNumber==BUFF_SIZE){PreviousImageNumber=0;}
-           
-		  
-		   //QueryPerformanceCounter(&end);
-           //double ProcTime= ((double)((end.QuadPart - start.QuadPart) * 1000000 /clockFrequency.QuadPart)) ;
-           //mexVMIcrtlLog<<"processus time average ="<<ProcTime<<" microseconds\n";
         }
         
         //*// RESET THE ACCUMULATED IMAGE (ONLY IN PREVIEW) //*//
@@ -739,9 +704,6 @@ void VMIcrtl::GetFrameImagePrev()
 		cudaEventSynchronize(stop);
 		float milliseconds = 0;
 		cudaEventElapsedTime(&milliseconds, start, stop);
-
-		//mexVMIcrtlLog<<"Elapsed time"<<milliseconds<<"\n";
-		//mexVMIcrtlLog<<"Effective Bandwidth (GB/s): "<<1.6e5*1*5/(1e-3*milliseconds)/1e9<<"\n";
 		
     }
     Fg_setFlash(fg,trigger_strobeoff,0);
@@ -775,12 +737,7 @@ void VMIcrtl::GetFrameImage()
         //*// PROCESS THE FRAMES RECORDED, SEPARATING CASES WITH LESS THAN 5 FRAMES (MAXIMUM PARALLEL PROCESSING SET WITH CUDA) //*//  
         if(Frame_Parametersptr[1]<5)
         {
-			//flush the stream to GPU
-			/*for(int j=0;j<5;j++)
-			{
-				h_StreamPtr[j]=NULL;
-			}*/
-            if((PreviousImageNumber+(Frame_Parametersptr[1]-1))<LastImageNumber)
+			if((PreviousImageNumber+(Frame_Parametersptr[1]-1))<LastImageNumber)
             {
                 Frame_Parametersptr[5]=LastImageNumber;
                 for(int j=0;j<Frame_Parametersptr[1];j++)
@@ -792,7 +749,7 @@ void VMIcrtl::GetFrameImage()
                 memmove(h_StreamPtr[j],(unsigned char*)Fg_getImagePtrEx(fg,LastImageNumber,0,memhdr),M_WIDTH*M_HEIGHT);
 				}
                 //*// PARALLEL TREATEMENT OF EACH FRAME //*//
-                cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr);
+                cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr,mexVMIcrtlLog);
                 count+=Frame_Parametersptr[1];
                 
 			}
@@ -802,9 +759,6 @@ void VMIcrtl::GetFrameImage()
        
             Frame_Parametersptr[5]=LastImageNumber; //*// SAVE NUMBER OF LAST FRAME GRABBED //*//
             
-            //QueryPerformanceCounter(&start1);
-			//QueryPerformanceCounter(&start2);
-          
             // Send the frame from framegrabber to GPU for threshold processing.
             
             for(int i=0;i<5;i++)
@@ -817,21 +771,11 @@ void VMIcrtl::GetFrameImage()
             }
             
             //*// PARALLEL TREATEMENT OF EACH FRAME //*//
-            cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr);
+            cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr,mexVMIcrtlLog);
           
             count +=5;
             Frame_Parametersptr[8]=(long) count;
             PreviousImageNumber=LastImageNumber;
-			
-			//QueryPerformanceCounter(&end1);
-			
-            
-			//QueryPerformanceCounter(&end2);
-            //double ProcTime1= ((double)((end1.QuadPart - start1.QuadPart) * 1000000 /clockFrequency.QuadPart));
-			//double ProcTime2= ((double)((end2.QuadPart - start2.QuadPart) * 1000000 /clockFrequency.QuadPart));
-			//mexVMIcrtlLog<<"5 frames Process time ="<<ProcTime1<<" microseconds\n";
-//            mexVMIcrtlLog<<"5 frames Process time and display ="<<ProcTime2<<" microseconds\n";
-			
 			
         }
 		
@@ -839,10 +783,8 @@ void VMIcrtl::GetFrameImage()
         
     }
     Fg_setFlash(fg,trigger_strobeoff,0); /* stop the trigger to the digitizer */
-//	mexVMIcrtlLog<<"END OF Acquisition: "<<count<<" images recorded and processed \n";
  
     IFG_ACQ_IS_DONE=true; 
-//    mexVMIcrtlLog<<"Acquisition DONE\n";
     VMIcrtl::StopAcquisition(); //*// STOP THE CPU THREAD PROPERLY //*//
 
     //*// SAVE IMAGE IN FILE NAMED IN MATLAB GUI //*//
@@ -880,7 +822,6 @@ void VMIcrtl::StopGrabber()
     Fg_FreeMemEx(fg,memhdr);    // Free the ressources allowed to the frame grabber.
     Fg_FreeGrabber(fg);
     
-    
     cudaError_t cudaStatus=FreeCUDAMem(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,d_FrameParamptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,d_BG_Corrptr);
     if(cudaStatus == cudaSuccess)
     {
@@ -895,26 +836,12 @@ void VMIcrtl::StopGrabber()
 //        mexVMIcrtlLog<<"ERROR: cudaErrorInitializationError \n";
     }
     
-//     for(int i=0;i<5;i++)
-//     {
-//         delete h_StreamPtr[i];
-//         delete d_SSDataStream_ptr[i];
-//         delete d_SSIndexStream_ptr[i];
-//     }
     delete h_BG_Corrptr;
     delete [] h_StreamPtr;
     delete [] d_SSDataStream_ptr;
     delete [] d_SSIndexStream_ptr;
-    
-    
-    
     delete [] Frame_Parametersptr;
     
-//    mexVMIcrtlLog.close();
-    
-    
-    
-   
 }
 /* Methods to recall image in the viewer */
 
@@ -950,8 +877,6 @@ ImgArray VMIcrtl::RecallBGcorrection()
 	}
 	return pArray;
 }
-
-
 
 /* Methods to get infos */
 
@@ -1156,13 +1081,9 @@ void VMIcrtl::setBGCorrection()
      
     Fg_AcquireEx(fg,0,50,ACQ_STANDARD,memhdr);
     frameindex_t LastImageNumber=Fg_getLastPicNumberEx(fg,0,memhdr);
-//    mexVMIcrtlLog<<"DEBUG: last image number at acquisition start "<<(int) LastImageNumber<<"\n";
-//    mexVMIcrtlLog<<"BGCorrACQ Started ?"<<Fg_getLastErrorDescription(fg)<<" "<<Fg_getLastErrorNumber(fg)<<"\n";
-    //boost::this_thread::sleep(boost::posix_time::seconds(1));
     LastImageNumber=Fg_getLastPicNumberEx(fg,0,memhdr);
-//    mexVMIcrtlLog<<"DEBUG: last image number after the 1 second thread pause "<<(int) LastImageNumber<<"\n";
-    //*// ACQUIRE THE BACKGROUND WHICH IS AN AVERAGE OF THE BACKGROUND OVER 50 FRAMES, HELPS TO GET SMOOTH IMAGES WITHOUT "GRAIN" //*//
-    while(LastImageNumber<50) 
+
+    while(LastImageNumber<50)
     {
         memmove(h_BG_Corrptr,(unsigned char*)Fg_getImagePtrEx(fg,1,0,memhdr),M_WIDTH*M_HEIGHT);
         count+=1;
@@ -1182,7 +1103,6 @@ void VMIcrtl::setBGCorrection()
     
     Fg_stopAcquireEx(fg,0,memhdr,STOP_ASYNC);
     
-//	mexVMIcrtlLog<<"BGCorrACQ Stopped ?"<<Fg_getLastErrorDescription(fg)<<" "<<Fg_getLastErrorNumber(fg)<<"\n";
     boost::this_thread::sleep(boost::posix_time::seconds(1));
 	
 }
