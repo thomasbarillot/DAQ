@@ -7,15 +7,16 @@
 //#if defined(_MSC_VER)
 
 
-#include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\include\cuda.h>
-#include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\include\cuda_runtime.h>
-#include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\include\thrust\host_vector.h>
-#include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\include\thrust\device_vector.h>
-#include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\include\thrust\reduce.h>
-#include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\include\thrust\count.h>
-#include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\include\thrust\copy.h>
-#include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\include\thrust\execution_policy.h>
-#include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\include\thrust\device_ptr.h>
+#include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v8.0\include\cuda.h>
+#include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v8.0\include\cuda_runtime.h>
+#include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v8.0\include\thrust\host_vector.h>
+#include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v8.0\include\thrust\device_vector.h>
+#include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v8.0\include\thrust\reduce.h>
+#include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v8.0\include\thrust\count.h>
+#include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v8.0\include\thrust\copy.h>
+#include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v8.0\include\thrust\execution_policy.h>
+#include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v8.0\include\thrust\system\cuda\execution_policy.h>
+#include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v8.0\include\thrust\device_ptr.h>
 #include <iterator>
 #include <stdio.h>
 #include <stdlib.h>

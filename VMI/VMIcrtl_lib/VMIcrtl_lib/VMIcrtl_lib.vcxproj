@@ -94,10 +94,10 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Program Files\Anaconda2\include;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\include;C:\local\boost_1_62_0;C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\DAQ\VMI\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\Anaconda2\include;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v8.0\include;C:\local\boost_1_62_0;C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\DAQ\VMI\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\lib\x64;C:\local\boost_1_62_0\lib64-msvc-10.0;C:\Users\Administrator\Documents\PythonRepositories_Tom\DAQ\VMI;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v8.0\lib\x64;C:\local\boost_1_62_0\lib64-msvc-10.0;C:\Users\Administrator\Documents\PythonRepositories_Tom\DAQ\VMI;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>clsersis.lib;boost_python-vc100-mt-1_62.lib;python27.lib;fglib5.lib;cudart.lib;cudadevrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <AddModuleNamesToAssembly>%(AddModuleNamesToAssembly)</AddModuleNamesToAssembly>

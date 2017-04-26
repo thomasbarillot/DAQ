@@ -33,8 +33,8 @@
 #include "C:\Users\Administrator\Documents\PythonRepositories_Tom\DAQ\VMI\include\clser.h"
 #include "C:\Users\Administrator\Documents\PythonRepositories_Tom\DAQ\VMI\CUDA_Processing.hpp"
 
-#include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\include\cuda.h>
-#include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\include\cuda_runtime.h>
+#include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v8.0\include\cuda.h>
+#include <C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v8.0\include\cuda_runtime.h>
 
 #include <C:\local\boost_1_62_0\boost\thread\thread.hpp>        // Allow to create boost thread for the acquisition
 #include <C:\local\boost_1_62_0\boost\chrono\chrono.hpp>

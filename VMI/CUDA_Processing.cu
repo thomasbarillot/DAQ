@@ -236,8 +236,8 @@ cudaError_t CUDAProcessingData(unsigned char **h_StreamPtr, unsigned int **d_SSD
                 {
                     thrust::device_ptr<unsigned char> d_FramePtrVec = thrust::device_pointer_cast(d_FramePtr);
 					thrust::device_vector<unsigned char> d_FrameVecCompact(Nbytes);
-                    auto result_end=thrust::copy_if(d_FramePtrVec, d_FramePtrVec+400*400,d_FrameVecCompact.begin(),is_not_zero());
-					thrust::host_vector<unsigned char> h_FrameVecCompact(d_FrameVecCompact.begin(),result_end);
+                    auto result_end=thrust::copy_if(thrust::cuda::par.on(stream[t]),d_FramePtrVec, d_FramePtrVec+400*400,d_FrameVecCompact.begin(),is_not_zero());
+					//thrust::host_vector<unsigned char> h_FrameVecCompact(d_FrameVecCompact.begin(),result_end);
 					//thrust::copy(h_FrameVecCompact.begin(),h_FrameVecCompact.end(),std::ostream_iterator<unsigned char>(SSofile, "\n"));
 					//thrust::copy_if(d_FramePtrVec-, d_FramePtrVec + 400*400 , std::ostream_iterator<unsigned char>(SSofile, "\n"));
                     //thrust::copy_if(thrust::cuda::par, d_FrameIdxPtrVec, d_FrameIdxPtrVec + 400*400 , std::ostream_iterator<int>(SSofile, "\n"), is_not_zero());
@@ -261,8 +261,8 @@ cudaError_t CUDAProcessingData(unsigned char **h_StreamPtr, unsigned int **d_SSD
                 {
                     thrust::device_ptr<unsigned char> d_FramePtrVec = thrust::device_pointer_cast(d_FramePtr);
 					thrust::device_vector<unsigned char> d_FrameVecCompact(Nbytes);
-                    auto result_end=thrust::copy_if(d_FramePtrVec, d_FramePtrVec+400*400,d_FrameVecCompact.begin(),is_not_zero());
-					thrust::host_vector<unsigned char> h_FrameVecCompact(d_FrameVecCompact.begin(),result_end);
+                    auto result_end=thrust::copy_if(thrust::cuda::par.on(stream[t]),d_FramePtrVec, d_FramePtrVec+400*400,d_FrameVecCompact.begin(),is_not_zero());
+					//thrust::host_vector<unsigned char> h_FrameVecCompact(d_FrameVecCompact.begin(),result_end);
 					
                 }
                 //cudaThreadSynchronize();
@@ -290,8 +290,8 @@ cudaError_t CUDAProcessingData(unsigned char **h_StreamPtr, unsigned int **d_SSD
                 {
 					thrust::device_ptr<unsigned char> d_FramePtrVec = thrust::device_pointer_cast(d_FramePtr);
 					thrust::device_vector<unsigned char> d_FrameVecCompact(Nbytes);
-                    auto result_end=thrust::copy_if(thrust::cuda::par,d_FramePtrVec, d_FramePtrVec+400*400,d_FrameVecCompact.begin(),is_not_zero());
-					thrust::host_vector<unsigned char> h_FrameVecCompact(d_FrameVecCompact.begin(),result_end);
+                    auto result_end=thrust::copy_if(thrust::cuda::par.on(stream[t]),d_FramePtrVec, d_FramePtrVec+400*400,d_FrameVecCompact.begin(),is_not_zero());
+					//thrust::host_vector<unsigned char> h_FrameVecCompact(d_FrameVecCompact.begin(),result_end);
 
                 }
                 //cudaThreadSynchronize();
@@ -311,8 +311,8 @@ cudaError_t CUDAProcessingData(unsigned char **h_StreamPtr, unsigned int **d_SSD
                 {
 					thrust::device_ptr<unsigned char> d_FramePtrVec = thrust::device_pointer_cast(d_FramePtr);
 					thrust::device_vector<unsigned char> d_FrameVecCompact(Nbytes);
-                    auto result_end=thrust::copy_if(d_FramePtrVec, d_FramePtrVec+400*400,d_FrameVecCompact.begin(),is_not_zero());
-					thrust::host_vector<unsigned char> h_FrameVecCompact(d_FrameVecCompact.begin(),result_end);
+                    auto result_end=thrust::copy_if(thrust::cuda::par.on(stream[t]),d_FramePtrVec, d_FramePtrVec+400*400,d_FrameVecCompact.begin(),is_not_zero());
+					//thrust::host_vector<unsigned char> h_FrameVecCompact(d_FrameVecCompact.begin(),result_end);
                 }
                 //cudaThreadSynchronize();
                 cudaEventRecord(event[t+5],stream[t]);
