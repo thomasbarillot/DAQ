@@ -629,7 +629,7 @@ void VMIcrtl::GetFrameImagePrev()
 					{		
 						timestamp=Fg_getImageEx(fg,SEL_NUMBER,LastImageNumber,0,0,memhdr);
                         Fg_getParameterEx(fg,FG_TIMESTAMP,&timestamp,0,memhdr,LastImageNumber);
-                        mexVMIcrtlLog<<timestamp<<"\n";
+                        mexVMIcrtlLog<<"TS:"<<timestamp<<"\n";
 						//mexVMIcrtlLog<<"Bufnum"<<timestamp<<" frame number"<<LastImageNumber<<"\n";
 						memmove(h_StreamPtr[j],(unsigned char*)Fg_getImagePtrEx(fg,LastImageNumber,0,memhdr),M_WIDTH*M_HEIGHT);
 					
@@ -667,7 +667,7 @@ void VMIcrtl::GetFrameImagePrev()
 					
 					timestamp=LastImageNumber-i;
 					Fg_getParameterEx(fg,FG_TIMESTAMP,&timestamp,0,memhdr,LastImageNumber-i);
-					mexVMIcrtlLog<<timestamp<<"\n";
+					mexVMIcrtlLog<<"TS:"<<timestamp<<"\n";
 					memmove(h_StreamPtr[i],(unsigned char*)Fg_getImagePtrEx(fg,LastImageNumber-i,0,memhdr),M_WIDTH*M_HEIGHT);
 						
 				}
@@ -726,17 +726,23 @@ void VMIcrtl::GetFrameImage()
     
     int count=0;
     frameindex_t PreviousImageNumber=0;
-    std::ofstream SSoutputfile;
-    SSoutputfile.open(SSFilename+"_"+std::to_string(count)+".dat");
+    if(Frame_Parametersptr[7]==1)
+    {
+        std::ofstream SSoutputfile;
+        SSoutputfile.open(SSFilename+"_"+std::to_string(count)+".dat");
+    }
     
     //*// LOOP WHILE THE TOTAL AMOUNT OF FRAMES CHOSEN IS NOT REACHED //*//
     Fg_setFlash(fg,trigger_strobeon,0);
     while(count<Frame_Parametersptr[1]) 
     {
-        if(count > 0 && count % 1000==0)
+        if(Frame_Parametersptr[7]==1)
         {
-            SSoutputfile.close()
-            SSoutputfile.open(SSFilename+"_"+std::to_string(count)+".dat");
+            if(count > 0 && count % 1000==0)
+            {
+                SSoutputfile.close()
+                SSoutputfile.open(SSFilename+"_"+std::to_string(count)+".dat");
+            }
         }
         if(IFG_ACQ_IS_ACTIVE==false){break;}//Fg_Acq_thread->Interruption_point();}
         frameindex_t ImNum = Fg_getImage(fg, SEL_ACT_IMAGE,10,0, 10);
@@ -754,7 +760,10 @@ void VMIcrtl::GetFrameImage()
                 //*// PICK FRAME FROM CAMERA TO CPU MEMORY with timestamp //*//
                 timestamp=Fg_getImageEx(fg,SEL_NUMBER,LastImageNumber,0,0,memhdr);
                 Fg_getParameterEx(fg,FG_TIMESTAMP,&timestamp,0,memhdr,LastImageNumber);
-                //mexVMIcrtlLog<<timestamp<<"\n";
+                if(Frame_Parametersptr[7]==1)
+                {
+                    SSoutputfile<<"TS:"<<timestamp<<"\n";
+                }
                 memmove(h_StreamPtr[j],(unsigned char*)Fg_getImagePtrEx(fg,LastImageNumber,0,memhdr),M_WIDTH*M_HEIGHT);
 				}
                 //*// PARALLEL TREATEMENT OF EACH FRAME //*//
@@ -775,7 +784,10 @@ void VMIcrtl::GetFrameImage()
             //*// PICK FRAME FROM CAMERA TO CPU MEMORY with timestamp//*//
             timestamp=LastImageNumber-i;
             Fg_getParameterEx(fg,FG_TIMESTAMP,&timestamp,0,memhdr,LastImageNumber-i);
-            //mexVMIcrtlLog<<timestamp<<"\n";
+            if(Frame_Parametersptr[7]==1)
+            {
+                SSoutputfile<<"TS:"<<timestamp<<"\n";
+            }
             memmove(h_StreamPtr[i],(unsigned char*)Fg_getImagePtrEx(fg,LastImageNumber-i,0,memhdr),M_WIDTH*M_HEIGHT);
             }
             
@@ -907,7 +919,14 @@ void VMIcrtl::setInitParametersIFG()
 void VMIcrtl::setFilename(const std::string &FN)
 {
 	Filename=FN.c_str();
+    
+    if(Frame_Parametersptr[7]==1)
+    {
+        SSFilename=FN.c_str();
+    }
+    
 }
+
 
 const char* VMIcrtl::GetFilename()
 {
