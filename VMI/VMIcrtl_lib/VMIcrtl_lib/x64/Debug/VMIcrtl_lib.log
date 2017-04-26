@@ -1,25 +1,22 @@
-﻿Build started 24/04/2017 16:44:58.
-     1>Project "C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\VMIcrtl_lib\VMIcrtl_lib\VMIcrtl_lib.vcxproj" on node 2 (build target(s)).
+﻿Build started 25/04/2017 17:51:52.
+     1>Project "C:\Users\Administrator\Documents\PythonRepositories_Tom\DAQ\VMI\VMIcrtl_lib\VMIcrtl_lib\VMIcrtl_lib.vcxproj" on node 2 (build target(s)).
      1>InitializeBuildStatus:
-         Touching "x64\Debug\VMIcrtl_ext.unsuccessfulbuild".
+         Creating "x64\Debug\VMIcrtl_ext.unsuccessfulbuild" because "AlwaysCreate" was specified.
        ClCompile:
-         c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\x86_amd64\CL.exe /c /I"C:\Program Files\Anaconda2\include" /I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\include" /IC:\local\boost_1_62_0 /IC:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\VMIacqPrg_v3Feb2016\include /Zi /nologo /W1 /WX- /O2 /D _WINDLL /D _AFXDLL /Gm- /EHsc /MD /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"x64\Debug\\" /Fd"x64\Debug\vc100.pdb" /Gd /TP /errorReport:prompt ..\..\VMIcrtl_ext.cpp
-         VMIcrtl_ext.cpp
-     1>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\include\thrust/detail/allocator/allocator_traits.inl(180): warning C4003: not enough actual parameters for macro 'max'
-     1>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\include\thrust/system/cuda/detail/for_each.inl(112): warning C4003: not enough actual parameters for macro 'max'
+         All outputs are up-to-date.
        Link:
-         c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\VMIcrtl_lib\x64\Debug\VMIcrtl_ext.pyd" /NOLOGO /LIBPATH:"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\lib\x64" /LIBPATH:"C:\local\boost_1_62_0\lib64-msvc-10.0" /LIBPATH:C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI clsersis.lib "boost_python-vc100-mt-1_62.lib" python27.lib fglib5.lib cudart.lib cudadevrt.lib /MANIFEST /ManifestFile:"x64\Debug\VMIcrtl_ext.pyd.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /PDB:"C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\VMIcrtl_lib\x64\Debug\VMIcrtl_ext.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\VMIcrtl_lib\x64\Debug\VMIcrtl_ext.lib" /MACHINE:X64 /DLL x64\Debug\VMIcrtl_ext.obj
+         c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Administrator\Documents\PythonRepositories_Tom\DAQ\VMI\VMIcrtl_lib\x64\Debug\VMIcrtl_ext.pyd" /NOLOGO /LIBPATH:"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\lib\x64" /LIBPATH:"C:\local\boost_1_62_0\lib64-msvc-10.0" /LIBPATH:C:\Users\Administrator\Documents\PythonRepositories_Tom\DAQ\VMI clsersis.lib "boost_python-vc100-mt-1_62.lib" python27.lib fglib5.lib cudart.lib cudadevrt.lib /MANIFEST /ManifestFile:"x64\Debug\VMIcrtl_ext.pyd.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /PDB:"C:\Users\Administrator\Documents\PythonRepositories_Tom\DAQ\VMI\VMIcrtl_lib\x64\Debug\VMIcrtl_ext.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Administrator\Documents\PythonRepositories_Tom\DAQ\VMI\VMIcrtl_lib\x64\Debug\VMIcrtl_ext.lib" /MACHINE:X64 /DLL x64\Debug\VMIcrtl_ext.obj
          ..\..\CUDA_Processing.obj
-            Creating library C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\VMIcrtl_lib\x64\Debug\VMIcrtl_ext.lib and object C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\VMIcrtl_lib\x64\Debug\VMIcrtl_ext.exp
+            Creating library C:\Users\Administrator\Documents\PythonRepositories_Tom\DAQ\VMI\VMIcrtl_lib\x64\Debug\VMIcrtl_ext.lib and object C:\Users\Administrator\Documents\PythonRepositories_Tom\DAQ\VMI\VMIcrtl_lib\x64\Debug\VMIcrtl_ext.exp
      1>LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
-         VMIcrtl_lib.vcxproj -> C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\VMIcrtl_lib\x64\Debug\VMIcrtl_ext.pyd
+         VMIcrtl_lib.vcxproj -> C:\Users\Administrator\Documents\PythonRepositories_Tom\DAQ\VMI\VMIcrtl_lib\x64\Debug\VMIcrtl_ext.pyd
        Manifest:
-         C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /outputresource:"C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\VMIcrtl_lib\x64\Debug\VMIcrtl_ext.pyd;#2" /manifest x64\Debug\VMIcrtl_ext.pyd.intermediate.manifest "c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\Include\Manifest\dpiaware.manifest"
+         C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /outputresource:"C:\Users\Administrator\Documents\PythonRepositories_Tom\DAQ\VMI\VMIcrtl_lib\x64\Debug\VMIcrtl_ext.pyd;#2" /manifest x64\Debug\VMIcrtl_ext.pyd.intermediate.manifest "c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\Include\Manifest\dpiaware.manifest"
        FinalizeBuildStatus:
          Deleting file "x64\Debug\VMIcrtl_ext.unsuccessfulbuild".
          Touching "x64\Debug\VMIcrtl_ext.lastbuildstate".
-     1>Done Building Project "C:\Users\Administrator\Documents\PythonRepositories_Tom\DataAcquisition\VMI\VMIcrtl_lib\VMIcrtl_lib\VMIcrtl_lib.vcxproj" (build target(s)).
+     1>Done Building Project "C:\Users\Administrator\Documents\PythonRepositories_Tom\DAQ\VMI\VMIcrtl_lib\VMIcrtl_lib\VMIcrtl_lib.vcxproj" (build target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:17.27
+Time Elapsed 00:00:00.90

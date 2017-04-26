@@ -18,19 +18,6 @@
 /*----------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------*/
 
-
-/* struct used to compact the vector */
-struct non_negative
-{
-    __host__ __device__
-    bool operator()(const int x)
-    {
-        return x >= 0;
-    }
-};
-
-
-
 __global__ void InitParam(long *d_FrameParamPtr)
 {
     d_FrameParamPtr[6]=0; // number of counts per frame
@@ -40,11 +27,11 @@ __global__ void InitParam(long *d_FrameParamPtr)
 __global__ void ThresholdingData(unsigned char *src,unsigned int *srcAcc, long *d_FrameParamPtr,unsigned int *SSDataStream,unsigned int *SSIndexStream,unsigned int *BlockCountBuff,int t, unsigned char *d_BGCorr)
 {
     int id=threadIdx.x+blockIdx.x*blockDim.x;
-    int sid=threadIdx.x
+    int sid=threadIdx.x;
     unsigned int BlockThreadoffset;
     unsigned int Blockoffset;
     __shared__ unsigned int BCB;
-    __shared__ unisgned int Datash[1000];
+    __shared__ unsigned int Datash[1000];
 
     BCB=BlockCountBuff[t];
 
@@ -90,57 +77,6 @@ __global__ void ThresholdingData(unsigned char *src,unsigned int *srcAcc, long *
     /*-------------------------- END OF ACCUMULATE DATA ON FRAME -------------------------*/
     /*------------------------------------------------------------------------------------*/
     
-    
-    /*------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-    /*------------------------- VECTOR COMPACTION IN THE KERNEL (ref D.M. Hughes & al. Computer Graphics forum, Vol 32, iss 6, p178-188 (2013)) ------------------------*/
-    /*------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-    if(SingleShotRecord==2)
-    {
-    __shared__ unsigned int W[25];          // array of warp offsets (for 800 threads/block -> 25 warps)
-    
-    
-    unsigned int warpindex=i/32;                    // will take only the floor of the value due to the fact that it is defined as int.
-    unsigned int threadindexinwarp= i%32;
-    unsigned int threadmask=INT_MAX>>(32-threadindexinwarp); // for example: [1111111111]->[0011111111] if arg=2;
-    
-    unsigned int ballotresult=__ballot(src[i]) & threadmask;
-    unsigned int threadoffset=__popc(ballotresult);
-    
-    if(threadindexinwarp==31)
-    {
-        if(src[i]==0)
-        {
-            W[warpindex]=threadoffset;
-        }
-        else
-        {
-            W[warpindex]=threadoffset+1;
-        }
-        __threadfence();
-        __syncthreads();
-    }
-    
-    BlockThreadoffset=__syncthreads_count(src[i]);
-    
-    unsigned int warpoffset=(__popc(__ballot(W[warpindex] & 1)&threadmask)>>warpindex) +(__popc(__ballot(W[warpindex]&2)&threadmask)>>warpindex)+(__popc(__ballot(W[warpindex]&4)&threadmask)>>warpindex)+(__popc(__ballot(W[warpindex]&8)&threadmask)>>warpindex)+(__popc(__ballot(W[warpindex]&16)&threadmask)>>warpindex)+(__popc(__ballot(W[warpindex]&32)&threadmask)>>warpindex);
-    
-    Blockoffset=atomicAdd(&BCB,BlockThreadoffset);        // Last problem on that line in compilation.
-    BlockCountBuff[t]=BCB;
-    unsigned int Totaloffset;
-    
-    Totaloffset=Blockoffset+warpoffset+threadoffset;
-    
-    if(src[i]>0)
-    {
-        SSDataStream[Totaloffset]=src[i];
-        SSIndexStream[Totaloffset]=i;
-    }
-    
-    __syncthreads();
-    }
-    /*-----------------------------------------------------------------------------*/
-    /*------------------------- END OF VECTOR COMPACTION --------------------------*/
-    /*-----------------------------------------------------------------------------*/
       
 }
 
@@ -162,6 +98,14 @@ __global__ void ResetDataArrays(unsigned int *srcAcc)
 /*----------------------------------------------------------------------------------------*/
 /*-------------------------------- C++ WRAPPING FUNCTIONS --------------------------------*/
 /*----------------------------------------------------------------------------------------*/
+struct is_not_zero
+{
+    __host__ __device__
+        bool operator()(const int x)
+    {
+        return (x != 0);
+    }
+};
 
 
 cudaError_t InitialiseCUDAMem(unsigned char **& h_StreamPtr, unsigned int **& d_SSDataStream_ptr, unsigned int **& d_SSIndexStream_ptr, long *& d_FrameParamPtr, unsigned char *& d_FramePtr, unsigned int *& d_PicturePtr, int Nbytes, unsigned char *& d_BGCorr)
@@ -291,12 +235,11 @@ cudaError_t CUDAProcessingData(unsigned char **h_StreamPtr, unsigned int **d_SSD
                 ThresholdingData<<<grid,threads,0,stream[t]>>>(d_FramePtr,d_PicturePtr,d_FrameParamPtr,d_SSDataStream_ptr[t],d_SSIndexStream_ptr[t],d_BlockCountBuff,t,d_BGCorr);     // Call thresholding data with number of blocks
                 if(h_FrameParamPtr[7]==1)
                 {
-                    int *vec_compact, *idx_compact;
-                    thrust::copy_if(thrust::cuda::par.on(stream[0]), d_FramePtr, d_FramePtr + this->vocab_size , vec_compact, non_negative());
-                    //thrust::copy_if(thrust::cuda::par.on(stream[0]), d_FrameIdxPtr, d_FrameIdxPtr + this->vocab_size , idx_compact, non_negative());
-                    free(vec_compact);
-                    free(idx_compact);
-
+                    thrust::device_vector<int> d_res(Nbytes*4);
+					auto result_end = thrust::copy_if(d_FramePtr->begin(), d_FramePtr->end(), d_res->begin(), is_not_zero());
+					 thrust::host_vector<int> h_res(d_res.begin(), result_end);
+                    //thrust::copy_if(thrust::cuda::par(stream[0]), d_FrameIdxPtr, d_FrameIdxPtr + this->vocab_size , idx_compact, non_negative());
+                 
                 }
 
                 //cudaThreadSynchronize();
@@ -314,9 +257,10 @@ cudaError_t CUDAProcessingData(unsigned char **h_StreamPtr, unsigned int **d_SSD
                 ThresholdingData<<<grid,threads,0,stream[t]>>>(d_FramePtr,d_PicturePtr,d_FrameParamPtr,d_SSDataStream_ptr[t],d_SSIndexStream_ptr[t],d_BlockCountBuff,t,d_BGCorr);     // Call thresholding data with number of blocks
                 if(h_FrameParamPtr[7]==1)
                 {
-                    int *vec_compact, *idx_compact;
-                    thrust::copy_if(thrust::cuda::par.on(stream[t]), d_FramePtr, d_FramePtr + this->vocab_size , vec_compact, non_negative());
-                    //thrust::copy_if(thrust::cuda::par.on(stream[t]), d_FrameIdxPtr, d_FrameIdxPtr + this->vocab_size , idx_compact, non_negative());
+                    int *vec_compact;
+					int *idx_compact;
+                    //thrust::copy_if(thrust::cuda::par(stream[t]), d_FramePtr, d_FramePtr + this->vocab_size , vec_compact, non_negative());
+                    //thrust::copy_if(thrust::cuda::par(stream[t]), d_FrameIdxPtr, d_FrameIdxPtr + this->vocab_size , idx_compact, non_negative());
                     free(vec_compact);
                     free(idx_compact);
                 }
@@ -343,9 +287,10 @@ cudaError_t CUDAProcessingData(unsigned char **h_StreamPtr, unsigned int **d_SSD
                 // Save data in case of single shot
                 if(h_FrameParamPtr[7]==1)
                 {
-                    int *vec_compact, *idx_compact;
-                    thrust::copy_if(thrust::cuda::par.on(stream[0]), d_FramePtr, d_FramePtr + this->vocab_size , vec_compact, non_negative());
-                    //thrust::copy_if(thrust::cuda::par.on(stream[0]), d_FrameIdxPtr, d_FrameIdxPtr + this->vocab_size , idx_compact, non_negative());
+                    int *vec_compact;
+					int *idx_compact;
+                    //thrust::copy_if(thrust::cuda::par(stream[0]), d_FramePtr, d_FramePtr + this->vocab_size , vec_compact, non_negative());
+                    //thrust::copy_if(thrust::cuda::par(stream[0]), d_FrameIdxPtr, d_FrameIdxPtr + this->vocab_size , idx_compact, non_negative());
                     free(vec_compact);
                     free(idx_compact);
 
@@ -365,9 +310,10 @@ cudaError_t CUDAProcessingData(unsigned char **h_StreamPtr, unsigned int **d_SSD
                 ThresholdingData<<<grid,threads,0,stream[t]>>>(d_FramePtr,d_PicturePtr,d_FrameParamPtr,d_SSDataStream_ptr[t],d_SSIndexStream_ptr[t],d_BlockCountBuff,t,d_BGCorr);     // Call thresholding data with number of blocks
                 if(h_FrameParamPtr[7]==1)
                 {
-                    int *vec_compact, *idx_compact;
-                    thrust::copy_if(thrust::cuda::par.on(stream[t]), d_FramePtr, d_FramePtr + this->vocab_size , vec_compact, non_negative());
-                    //thrust::copy_if(thrust::cuda::par.on(stream[t]), d_FrameIdxPtr, d_FrameIdxPtr + this->vocab_size , idx_compact, non_negative());
+                    int *vec_compact;
+					int *idx_compact;
+                    //thrust::copy_if(thrust::cuda::par(stream[t]), d_FramePtr, d_FramePtr + this->vocab_size , vec_compact, non_negative());
+                    //thrust::copy_if(thrust::cuda::par(stream[t]), d_FrameIdxPtr, d_FrameIdxPtr + this->vocab_size , idx_compact, non_negative());
                     free(vec_compact);
                     free(idx_compact);
                 }

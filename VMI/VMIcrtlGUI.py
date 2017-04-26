@@ -91,7 +91,7 @@ class MainWindow():
         self.checkbox0=QtGui.QCheckBox('Reference') #View the data feeded by the digitizer
         self.checkbox0.clicked.connect(self.updatePlot)
 
-        self.checkbox1=QtGui.QCheckBox('Stream mode') #View the data feeded by the digitizer
+        self.checkbox1=QtGui.QCheckBox('Refresh Viewer') #View the data feeded by the digitizer
         self.checkbox1.clicked.connect(self.StreamOnOff)
 
         self.checkbox2=QtGui.QCheckBox('Norm Radial Distribution')
@@ -171,7 +171,7 @@ class MainWindow():
         
         self.checkbox7=QtGui.QCheckBox('Median Filter')
         self.checkbox7.clicked.connect(self.UpdateParameters)
-        self.checkbox8=QtGui.QCheckBox('Centroiding')
+        self.checkbox8=QtGui.QCheckBox('Single Shot rec')
         self.checkbox8.clicked.connect(self.UpdateParameters)
         
         ## Trigger mode
@@ -179,7 +179,7 @@ class MainWindow():
         self.checkbox10=QtGui.QCheckBox('Trigger ON/OFF')
         self.checkbox10.clicked.connect(self.setTriggerMode)
         
-        self.ExpoLabel=QtGui.QLabel('Exposure (us)')
+        self.ExpoLabel=QtGui.QLabel('    Exposure (us)')
         self.spinbox10=QtGui.QSpinBox()
         self.spinbox10.valueChanged.connect(self.UpdateParameters)
         self.spinbox10.setMaximum(990)
@@ -225,8 +225,8 @@ class MainWindow():
         self.win.addWidget(self.spinbox3,row=9,col=0)
         
         #self.win.addWidget(self.triggerlabel,row=11,col=2,colspan=1)
-        self.win.addWidget(self.checkbox10,row=12,col=2,colspan=1)
-        self.win.addWidget(self.ExpoLabel,row=13,col=1,colspan=1)
+        self.win.addWidget(self.checkbox10,row=11,col=2,colspan=1)
+        self.win.addWidget(self.ExpoLabel,row=12,col=2,colspan=1)
         self.win.addWidget(self.spinbox10,row=13,col=2,colspan=1)
         
         self.win.addWidget(self.cxlabel,row=10,col=0)
@@ -475,9 +475,9 @@ class MainWindow():
         elif self.checkbox7.checkState()==0:
             self.VMIcrtl.setMedianFilter(0)
         if self.checkbox8.checkState()==2:
-            self.VMIcrtl.setCentroiding(1)
+            self.VMIcrtl.setSingleShot(1)
         elif self.checkbox8.checkState()==0:
-            self.VMIcrtl.setCentroiding(0)
+            self.VMIcrtl.setSingleShot(0)
             
         
     def updatePlot(self):

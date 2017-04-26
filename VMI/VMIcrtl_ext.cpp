@@ -49,7 +49,6 @@
 //#include "board_and_dll_chooser.h"
 
 //#include "opencv/build/include/opencv2/opencv.hpp"
-
 //#include "matrix.h"
 //#include "mexopencv.hpp"
 
@@ -61,7 +60,6 @@
 // The class that interface Matlab and the FrameGrabber
 
 typedef std::vector<int> ImgArray;
-
 
 /*  Class Declaration */
 
@@ -655,8 +653,7 @@ void VMIcrtl::GetFrameImagePrev()
                         mexVMIcrtlLog<<timestamp<<"\n";
 						//mexVMIcrtlLog<<"Bufnum"<<timestamp<<" frame number"<<LastImageNumber<<"\n";
 						memmove(h_StreamPtr[j],(unsigned char*)Fg_getImagePtrEx(fg,LastImageNumber,0,memhdr),M_WIDTH*M_HEIGHT);
-						
-						
+					
 					}
 					catch (int e)
 					{
@@ -791,7 +788,7 @@ void VMIcrtl::GetFrameImage()
                 //*// PICK FRAME FROM CAMERA TO CPU MEMORY with timestamp //*//
                 timestamp=Fg_getImageEx(fg,SEL_NUMBER,LastImageNumber,0,0,memhdr);
                 Fg_getParameterEx(fg,FG_TIMESTAMP,&timestamp,0,memhdr,LastImageNumber);
-                TimeStampsLog<<timestamp<<"\n";
+                //mexVMIcrtlLog<<timestamp<<"\n";
                 memmove(h_StreamPtr[j],(unsigned char*)Fg_getImagePtrEx(fg,LastImageNumber,0,memhdr),M_WIDTH*M_HEIGHT);
 				}
                 //*// PARALLEL TREATEMENT OF EACH FRAME //*//
@@ -815,7 +812,7 @@ void VMIcrtl::GetFrameImage()
             //*// PICK FRAME FROM CAMERA TO CPU MEMORY with timestamp//*//
             timestamp=LastImageNumber-i;
             Fg_getParameterEx(fg,FG_TIMESTAMP,&timestamp,0,memhdr,LastImageNumber-i);
-            TimeStampsLog<<timestamp<<"\n";
+            //mexVMIcrtlLog<<timestamp<<"\n";
             memmove(h_StreamPtr[i],(unsigned char*)Fg_getImagePtrEx(fg,LastImageNumber-i,0,memhdr),M_WIDTH*M_HEIGHT);
             }
             
@@ -1056,11 +1053,11 @@ void VMIcrtl::setNbAcq(int N)
     
 }
 
-void VMIcrtl::setCentroiding(int C)
+void VMIcrtl::setSingleShot(int C)
 {
     try
     {
-        Frame_Parametersptr[4]=C;
+        Frame_Parametersptr[7]=C;
 //        mexVMIcrtlLog<<"DEBUG: Set Centroiding ON"<<(long) Frame_Parametersptr[1]<<"\n";
     }
     catch (int e)
@@ -1218,7 +1215,7 @@ BOOST_PYTHON_MODULE(VMIcrtl_ext)
         .def("setThreshold", &VMIcrtl::setThreshold)
         .def("setMedianFilter", &VMIcrtl::setMedianFilter)
         .def("setNbAcq", &VMIcrtl::setNbAcq)
-        .def("setCentroiding", &VMIcrtl::setCentroiding)
+        .def("setSingleShot", &VMIcrtl::setSingleShot)
         .def("setTriggerMode", &VMIcrtl::setTriggerMode)
         .def("setExposure", &VMIcrtl::setExposure)
         
