@@ -759,18 +759,35 @@ void VMIcrtl::GetFrameImage()
                 for(int j=0;j<Frame_Parametersptr[1];j++)
                 {
                 //*// PICK FRAME FROM CAMERA TO CPU MEMORY with timestamp //*//
-                timestamp=Fg_getImageEx(fg,SEL_NUMBER,LastImageNumber,0,0,memhdr);
-                Fg_getParameterEx(fg,FG_TIMESTAMP,&timestamp,0,memhdr,LastImageNumber);
-                if(Frame_Parametersptr[7]==1)
-                {
-                    //SSoutputfile<<"TS:"<<timestamp<<"\n";
-                }
-                memmove(h_StreamPtr[j],(unsigned char*)Fg_getImagePtrEx(fg,LastImageNumber,0,memhdr),M_WIDTH*M_HEIGHT);
+					try
+					{
+						timestamp=Fg_getImageEx(fg,SEL_NUMBER,LastImageNumber,0,0,memhdr);
+						Fg_getParameterEx(fg,FG_TIMESTAMP,&timestamp,0,memhdr,LastImageNumber);
+						if(Frame_Parametersptr[7]==1)
+						{
+							//SSoutputfile<<"TS:"<<timestamp<<"\n";
+						}
+						memmove(h_StreamPtr[j],(unsigned char*)Fg_getImagePtrEx(fg,LastImageNumber,0,memhdr),M_WIDTH*M_HEIGHT);
+					}
+					catch (int e)
+					{
+//						mexVMIcrtlLog<<"ERROR grab image:"<<Fg_getLastErrorDescription(fg)<<" "<<Fg_getLastErrorNumber(fg)<<"\n";
+					}	
 				}
-                //*// PARALLEL TREATEMENT OF EACH FRAME //*//
-                cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr);
-                count+=Frame_Parametersptr[1];
-                
+					//*// PARALLEL TREATEMENT OF EACH FRAME //*//
+				try
+				{
+					cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr);
+					count+=Frame_Parametersptr[1];
+					if (cudaStatus != cudaSuccess){throw cudaGetErrorString(cudaStatus);}
+
+				}
+				catch (const char* cudaerror)
+				{
+//					mexVMIcrtlLog<<"ERROR: Cuda failed: "<<cudaerror<<"\n";
+				}
+					
+				
 			}
         }
         else if((PreviousImageNumber+4)<LastImageNumber)
@@ -783,18 +800,33 @@ void VMIcrtl::GetFrameImage()
             for(int i=0;i<5;i++)
             {
             //*// PICK FRAME FROM CAMERA TO CPU MEMORY with timestamp//*//
-            timestamp=LastImageNumber-i;
-            Fg_getParameterEx(fg,FG_TIMESTAMP,&timestamp,0,memhdr,LastImageNumber-i);
-            if(Frame_Parametersptr[7]==1)
-            {
-                //SSoutputfile<<"TS:"<<timestamp<<"\n";
-            }
-            memmove(h_StreamPtr[i],(unsigned char*)Fg_getImagePtrEx(fg,LastImageNumber-i,0,memhdr),M_WIDTH*M_HEIGHT);
+				try
+				{
+					timestamp=LastImageNumber-i;
+					Fg_getParameterEx(fg,FG_TIMESTAMP,&timestamp,0,memhdr,LastImageNumber-i);
+					if(Frame_Parametersptr[7]==1)
+					{
+						//SSoutputfile<<"TS:"<<timestamp<<"\n";
+					}
+					memmove(h_StreamPtr[i],(unsigned char*)Fg_getImagePtrEx(fg,LastImageNumber-i,0,memhdr),M_WIDTH*M_HEIGHT);
+				}
+				catch (int e)
+				{
+//						mexVMIcrtlLog<<"ERROR grab image:"<<Fg_getLastErrorDescription(fg)<<" "<<Fg_getLastErrorNumber(fg)<<"\n";
+				}
             }
             
             //*// PARALLEL TREATEMENT OF EACH FRAME //*//
-            cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr);
-          
+			try
+			{
+				cudaStatus=CUDAProcessingData(h_StreamPtr,d_SSDataStream_ptr,d_SSIndexStream_ptr,img_ptr,d_Frame_GPUptr,d_Accumulated_Picture_GPUptr,M_WIDTH*M_HEIGHT,Frame_Parametersptr,d_FrameParamptr,d_BG_Corrptr);
+				if (cudaStatus != cudaSuccess){throw cudaGetErrorString(cudaStatus);}
+			}
+			catch (const char* cudaerror)
+			{
+				//mexVMIcrtlLog<<"ERROR: Cuda failed: "<<cudaerror<<"\n";
+			}
+
             count +=5;
             Frame_Parametersptr[8]=(long) count;
             PreviousImageNumber=LastImageNumber;
