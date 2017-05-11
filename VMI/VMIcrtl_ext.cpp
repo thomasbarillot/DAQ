@@ -372,8 +372,8 @@ VMIcrtl::VMIcrtl()
 	Fg_setParameter(fg,FG_FLASH_POLARITY,&flash_polarity,0);
 	Fg_setFlash(fg,trigger_strobeoff,0);
     
-    size_t fbuffsize=M_WIDTH*M_HEIGHT*1.0*500;   //size of picture*pixelsize(bytes)*number of subbuffers (or pictures)
-    memhdr=Fg_AllocMemEx(fg,fbuffsize,500); // Allocate memory for the FrameBuffer.
+    size_t fbuffsize=M_WIDTH*M_HEIGHT*1.0*1000;   //size of picture*pixelsize(bytes)*number of subbuffers (or pictures)
+    memhdr=Fg_AllocMemEx(fg,fbuffsize,1000); // Allocate memory for the FrameBuffer.
     frameindex_t lastPicNr = 0;
     
     
