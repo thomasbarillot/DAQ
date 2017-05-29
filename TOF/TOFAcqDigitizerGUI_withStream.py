@@ -321,21 +321,20 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
                     data_chB = np.zeros((self.Nsamples_button.value()),dtype=np.int16)
                 print 'data stream recorded'
                 count+=1
-                #if streamavg_button.value()==1:
-                #    if count==100:
-                #        self.data_chA=tmpchA/100.0
-                #        self.data_chB=tmpchB/100.0
-                #        tmpchA = data_chA
-                #        tmpchB = data_chB
-                #        count=0
-                #    else:
-                #        tmpchA+=data_chA
-                #        tmpchB+=data_chB
-                #else:
-                self.data_chA=data_chA
-                self.data_chB=data_chB
+                if streamavg_button.value()==1:
+                    if count==self.Navg_button.value():
+                        self.data_chA=tmpchA/np.float(self.Navg_button.value())
+                        self.data_chB=tmpchB/np.float(self.Navg_button.value())
+                        tmpchA = data_chA
+                        tmpchB = data_chB
+                        count=0
+                    else:
+                        tmpchA+=data_chA
+						tmpchB+=data_chB
                 
-                
+				else:
+					self.data_chA=data_chA
+					self.data_chB=data_chB
                 
                 #time.sleep(0.5)
                 print 'updating the streaming'
