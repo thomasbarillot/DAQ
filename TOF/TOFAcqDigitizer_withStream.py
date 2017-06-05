@@ -71,7 +71,7 @@ class TOFAcqDigitizer():
         self.triggermode=2 # choose: 'CH_A(3)','CH_B(3)' or 'EXTERNAL_TRIGGER (2)'
         self.trigchannel=1 # Choose 'CH_A(1)','CH_B(2)' 
         self.trig_edge = 1 #RISING_EDGE(1) or FALLING EDGE(0)
-        self.triglevel_mv =-0.70 #Trigger threshold in mV => For a level trigger this must be in the range +/-150mV. For external trigger this must be in the range -500mV to +3300mV.
+        self.triglevel_mv =-0.7 #Trigger threshold in mV => For a level trigger this must be in the range +/-150mV. For external trigger this must be in the range -500mV to +3300mV.
         self.record_start_shift = 'NONE' #choose 'PRETRIGGER', 'HOLDOFF' OR 'NONE'
         self.pretrigger_ns=0 #only applicable if 'PRETRIGGER' is selected.
         self.holdoff_ns=0 #only applicable if 'HOLDOFF' is selected.
@@ -303,12 +303,13 @@ class TOFAcqDigitizer():
 ### DSCAN ON ###
         elif self.dscanmode==1:
             
-            if self.acqmode==1:
-                try:
-                    avgscanA=np.zeros((len(self.dscanrange),self.nsamplesA),dtype=np.int64)
-                    avgscanB=np.zeros((len(self.dscanrange),self.nsamplesA),dtype=np.int64)
-                except:
-                    self.f.write('Initialisation of average scan matrix failed.\n')
+            #if self.acqmode==1:
+            try:
+                avgscanA=np.zeros((len(self.dscanrange),self.nsamplesA),dtype=np.int64)
+                avgscanB=np.zeros((len(self.dscanrange),self.nsamplesA),dtype=np.int64)
+            except:
+                self.f.write('Initialisation of average scan matrix failed.\n')
+            
             for j,delayval in enumerate(self.dscanrange):
                 
                 # Change the delay on the delaystage (humongium computer)
@@ -317,12 +318,12 @@ class TOFAcqDigitizer():
                     if not os.path.exists('%s/SSdelay%s' % (foldername,str(j).zfill(2))):
                         os.makedirs('%s/SSdelay%s' % (foldername,str(j).zfill(2)))
                 
-                if self.acqmode==1:
-                    try:
-                        avgtraceA=np.zeros((self.nsamplesA),dtype=np.int64)
-                        avgtraceB=np.zeros((self.nsamplesA),dtype=np.int64)
-                    except:
-                        self.f.write('Initialisation of average trace failed.\n') 
+                #if self.acqmode==1:
+                try:
+                    avgtraceA=np.zeros((self.nsamplesA),dtype=np.int64)
+                    avgtraceB=np.zeros((self.nsamplesA),dtype=np.int64)
+                except:
+                    self.f.write('Initialisation of average trace failed.\n') 
                 # Wait for 1 second that the stage has moved
                 time.sleep(1.0)
                 
@@ -404,9 +405,14 @@ class TOFAcqDigitizer():
                                 ADQAPI.ADQ_GetData(self.adq_cu,1,target_buffers,self.buffer_sizeA,self.bytes_per_sample,savestart,NumberOfRecords,ChannelsMask,StartSample,self.nsamplesA,0x00)
                                 data_16bit_ch0 = np.frombuffer(target_buffers[0].contents,dtype=np.int16)
                                 data_16bit_ch1 = np.frombuffer(target_buffers[1].contents,dtype=np.int16)
+                                tmp=data_16bit_ch0
+                                tmp[tmp>=-150]=0
+                                avgtraceA+=np.reshape(tmp,(self.nsaverecords,self.nsamplesA)).sum(0)
+                                avgtraceB+=np.reshape(data_16bit_ch1,(self.nsaverecords,self.nsamplesA)).sum(0)
+                                
                                 #timestamps=np.frombuffer(target_headers.Timestamp,dtype=np.int64)
                                 data={'specmat_ChA':data_16bit_ch0,'specmat_ChB':data_16bit_ch1}#'timestamps':timestamps}
-                            
+                                
                                 path_mat='%s/SSdelay%s/specfile_%s.mat' % (foldername,str(j).zfill(2),str(i).zfill(3))
                                 #path_npz='%s/SSdelay%i/specfile_%i.npz' % (foldername,j,i)
                                 try:
@@ -418,22 +424,28 @@ class TOFAcqDigitizer():
                                 self.f.write('failed recording singleshot trace\n')
                             i+=1
                             saveend+=self.nsaverecords
+                        
+                    try:
+                        avgscanA[j,:]=avgtraceA
+                        avgscanB[j,:]=avgtraceB
+                    except:
+                        self.f.write('failed building average scan\n')
                             
                 self.ProgressBar.setValue(np.round(100*j/np.float(len(self.dscanrange))))
                                    
                 
-                if self.acqmode==1:
-                    data={'Scan_ChA':avgscanA, \
+                #if self.acqmode==1:
+                dataavg={'Scan_ChA':avgscanA, \
                                            'Scan_ChB':avgscanB,\
                                            'Delay':self.dscanrange}
         
-                    path_mat='%s/ScanAvg.mat' % (foldername)
-                    try:
-                        sio.savemat(path_mat,data)
+                path_mat='%s/ScanAvg.mat' % (foldername)
+                try:
+                    sio.savemat(path_mat,dataavg)
                         #path_npz='%s/ScanAvg.npz' % (foldername,i)
                         #np.savez(path_npz,**data)
-                    except:
-                        self.f.write('failed saving singleshot trace\n')
+                except:
+                    self.f.write('failed saving avg trace\n')
                 
             success=ADQAPI.ADQ_DisarmTrigger(self.adq_cu,1)
             if (success == 0):
@@ -530,7 +542,7 @@ class TOFAcqDigitizer():
         for bufp in target_buffersStream:
             bufp.contents = (c_int16*self.nsamplesA)()
         
-        time.sleep(0.25)
+        time.sleep(0.01)
         try:
             success=ADQAPI.ADQ_GetData(self.adq_cu,1,target_buffersStream,self.buffer_sizeA,self.bytes_per_sample,0,1,ChannelsMask,StartSample,self.nsamplesA,0x00)
             acquiredrecord=ADQAPI.ADQ_GetAcquiredRecords(self.adq_cu,1)

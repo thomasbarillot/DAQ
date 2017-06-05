@@ -319,10 +319,11 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
                 if len(data_chA)==0 or len(data_chB)==0:
                     data_chA = np.zeros((self.Nsamples_button.value()),dtype=np.int16)
                     data_chB = np.zeros((self.Nsamples_button.value()),dtype=np.int16)
-                print 'data stream recorded'
+                print 'data stream recorded'♥
                 count+=1
-                if streamavg_button.value()==1:
-                    if count==self.Navg_button.value():
+                if self.streamavg_button.isChecked()==True:
+                    print 'Rec data stream avg'
+                    if count>=self.Navg_button.value():
                         self.data_chA=tmpchA/np.float(self.Navg_button.value())
                         self.data_chB=tmpchB/np.float(self.Navg_button.value())
                         tmpchA = data_chA
@@ -330,9 +331,9 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
                         count=0
                     else:
                         tmpchA+=data_chA
-						tmpchB+=data_chB
-                
-				else:
+                        tmpchB+=data_chB
+
+                else:
 					self.data_chA=data_chA
 					self.data_chB=data_chB
                 
