@@ -5,6 +5,13 @@
 //                                          //
 //////////////////////////////////////////////
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Compiling command to be called each time the file is changed:											//
+//																											//
+//  nvcc -arch=sm_30 -Xcompiler -fPIC -c -o CUDA_Processing.obj CUDA_Processing.cu -lcudadevrt -lcudart		//
+//																											//
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #include "CUDA_Processing.hpp"
 
 /*---------------- GLOBAL VARIABLES TO BE USED ON THE GPU ------------------------------*/

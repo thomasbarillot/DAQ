@@ -511,7 +511,7 @@ void VMIcrtl::StartAcquisition()
 //            mexVMIcrtlLog<<"ERROR: initialise Accumulated frame \n";
         }
     
-        acqstart=Fg_AcquireEx(fg,0,GRAB_INFINITE,ACQ_BLOCK,memhdr);
+        acqstart=Fg_AcquireEx(fg,0,GRAB_INFINITE,ACQ_STANDARD,memhdr);
 //        mexVMIcrtlLog<<"Aquisition started?:"<<Fg_getLastErrorDescription(fg)<<" "<<Fg_getLastErrorNumber(fg)<<"\n";
     }
     catch (int e)
