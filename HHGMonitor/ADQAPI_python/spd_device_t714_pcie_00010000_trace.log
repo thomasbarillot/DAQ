@@ -1,0 +1,155 @@
+---------------------------------------------------------------------
+Log and error trace from ADQ of type   714
+---------------------------------------------------------------------
+
+[Log Header]
+Operating System       : Windows 7 Unknown architecture
+Device type (integral) : 714
+API Revision           : 0025322
+API DLL Path           : C:\Windows\system32\ADQAPI.dll
+DLL calling executable : C:\Python27\WinPython-32bit-2.7.10.3\python-2.7.10\python.exe
+[End of Log Header]
+
+INFO : Enumerating and initializing non-SPD modules:
+INFO : Detected firmware AXI module ADQGEN7_HW_JESD204_0_TYPE at base address 0x51010000
+INFO : Detected firmware AXI module ADQGEN7_HW_IIC_0_TYPE at base address 0x40800000
+INFO : Detected firmware AXI module ADQGEN7_HW_INTC_0_TYPE at base address 0x41200000
+INFO : Detected firmware AXI module ADQGEN7_HW_SPI_0_TYPE at base address 0x44A00000
+INFO : Detected firmware AXI module ADQGEN7_HW_SPI_1_TYPE at base address 0x44A10000
+INFO : Detected firmware AXI module ADQGEN7_HW_SYSMON_0_TYPE at base address 0x51020000
+INFO : Detected firmware AXI module ADQGEN7_HW_TMRCTR_0_TYPE at base address 0x41C00000
+INFO : Detected firmware AXI module ADQGEN7_HW_DRPBRIDGE_JESD_TYPE at base address 0x52000000
+INFO : Detected firmware AXI module ADQGEN7_HW_DRPBRIDGE_PCIE_TYPE at base address 0x52010000
+INFO : Enumerating and initializing SPD modules:
+INFO : Initialized AXI module Acquisition        v1.0 at base address 0x500B0000.
+INFO : Initialized AXI module BarrelShifter      v0.0 at base address 0x50050000.
+INFO : Initialized AXI module DataTrig           v2.0 at base address 0x50010000.
+INFO : Initialized AXI module GeneralIO          v1.2 at base address 0x50090000.
+INFO : Initialized AXI module LevelTrig          v0.0 at base address 0x50030000.
+INFO : Initialized AXI module MemManager         v0.1 at base address 0x50080000.
+INFO : Initialized AXI module PacketGen          v1.0 at base address 0x50070000.
+INFO : Initialized AXI module PreTrig            v1.0 at base address 0x50040000.
+INFO : Initialized AXI module SampleSkip         v0.0 at base address 0x500C0000.
+INFO : Initialized AXI module TestPattern        v0.0 at base address 0x500A0000.
+INFO : Initialized AXI module UserLogic1         v0.0 at base address 0x50020000.
+INFO : Initialized AXI module UserLogic2         v0.0 at base address 0x60000000.
+INFO : Initialized AXI module GainAndOffset      v0.0 at base address 0x500E0000.
+INFO : Initialized AXI module DBS                v0.0 at base address 0x500F0000.
+INFO : Initialized AXI module Crypto             v0.0 at base address 0x50120000.
+INFO : Initialized AXI module MCUParameters      v1.1 at base address 0x00009E04.
+INFO : Setting up device:
+INFO : FPGA firmware information:
+INFO :   Revision:            25232
+INFO :   Channels:            2
+INFO :   Parallel samples:    8
+INFO :   Data width:          16 bits
+INFO :   Interleaving factor: 2^1
+INFO : Attempting to enumerate and cache EEPROM.
+INFO :    Found EEPROM block: BASIC   , length 332
+INFO :    Found EEPROM block: ADQ14   , length 29
+INFO :    Found EEPROM block: ADQPRCAL, length 50
+INFO :    Found EEPROM block: ADJBIAS , length 68
+INFO :    Found EEPROM block: DCAFECAL, length 58
+INFO :    Found EEPROM block: LAST    , length 18
+INFO : Cached a total of 571 bytes from the EEPROM. Took 0.02 seconds
+INFO : Successfully parsed EEPROM BASIC block.
+INFO :   Product: ADQ14DC-2X-PCIe 
+INFO :   Serial:  SPD-04346
+INFO :   PCB PN:  106-000-109 A
+INFO :   PCBA PN: 300-000-168 B
+INFO :   HWA PN:  320-225-015 A
+INFO :   HWSA PN:  
+INFO : Successfully parsed EEPROM ADQ14 block.
+INFO :   Channel 1: DC-coupled, Interleaved
+INFO :   Channel 2: DC-coupled, Interleaved
+INFO :   FPGA:    XC7K325T (I-grade, -2)
+INFO : FPGA DNA (64 bits):	0x001449ca 0x13d97054.
+INFO : (ADQGen7_EECalibration::ReadLicenseBlock:291) : No LICENSE block found, only standard firmware is allowed.
+WARN : License verification was not successful.
+INFO : PLL detected: LMK04821
+INFO : Detected ADC at SPI address 02: AD9680, 1000 MSps
+INFO : Detected ADC at SPI address 03: AD9680, 1000 MSps
+INFO : Successfully parsed EEPROM ADQPRCAL block.
+INFO : Successfully parsed EEPROM ADJBIAS block.
+INFO : Successfully parsed EEPROM DCAFECAL block.
+INFO : External reference frequency set to 10.00 MHz
+INFO : Desired sample set to 2000.00 MSps
+INFO : Attempting to change clock source to: 0
+INFO : (ADQGen7_PLL::VerifyPLL2Lock:297) : PLL2 signaled lock detect.
+INFO : FPGA JESD204B IP sysref captured and sync achieved.
+INFO : ADC 1 received SYSREF, setup and hold are OK.
+INFO : ADC 2 received SYSREF, setup and hold are OK.
+INFO : Pretrigger module supports 16384 samples maximum.
+INFO : (ADQGen7_DBSStd3::Reset:144) : DBS instance 0 identifying as 0 of 4 verified, core version 1624.
+INFO : (ADQGen7_DBSStd3::Reset:144) : DBS instance 1 identifying as 1 of 4 verified, core version 1624.
+INFO : (ADQGen7_DBSStd3::Reset:144) : DBS instance 2 identifying as 2 of 4 verified, core version 1624.
+INFO : (ADQGen7_DBSStd3::Reset:144) : DBS instance 3 identifying as 3 of 4 verified, core version 1624.
+INFO : No SP Devices standard daughterboard detected.
+INFO : DRAM Debug reg0: 0x00007f7e
+INFO : DRAM bank 1 reports calibration success.
+INFO : DRAM bank 2 reports calibration success.
+INFO : Pretrigger module supports 16384 samples maximum.
+INFO : === BOARD CURRENTS ===
+INFO : LTM4633 input current: 1.25A
+INFO : LTM4644 input current: 1.63A
+INFO : Negative DC/DC input current: 0.13A
+INFO : Total 12V current: 3.33A
+
+INFO : === BOARD SUPPLY VOLTAGES ===
+INFO : Board supply:
+INFO :      +12V:  12.06    OK
+INFO : DC/DC positive supply voltages:
+INFO :      +1V0:  1.00    OK
+INFO :      +1V5:  1.48    OK
+INFO :      +1V8:  1.77    OK
+INFO :      +3V3:  3.33    OK
+INFO :      +4V0:  4.01    OK
+INFO :      +5V3:  5.28    OK
+INFO : DC/DC negative supply voltages:
+INFO :      -2V1: -2.14    OK
+INFO :      -5V2: -5.19    OK
+INFO : ADC/PLL supply voltages:
+INFO :   +1V25A1:  1.24    OK
+INFO :   +1V25A2:  1.24    OK
+INFO :    +1V25D:  1.25    OK
+INFO :     +2V5A:  2.56    OK
+INFO :     +3V3A:  3.32    OK
+INFO : Frontend supply voltages:
+INFO :      -4VA: -3.99    OK
+INFO :   +3V3CLK:  3.34    OK
+INFO :     -0V6A: -0.60    OK
+INFO :     +4V6A:  4.64    OK
+INFO :     +4V1A:  4.10    OK
+INFO :      +8VA:  7.95    OK
+INFO : FPGA supply voltages:
+INFO :     +1V05:  1.04    OK
+INFO :      +1V2:  1.21    OK
+INFO :      +2V5:  2.55    OK
+INFO : === BOARD TEMPERATURES ===
+INFO :        FPGA temp:  55.9 degC   OK (Overheat limit at:  100.0)
+INFO :     LTM4644 temp:  60.2 degC   OK (Overheat limit at:  110.0)
+INFO :   LTM4633 temp A:  51.1 degC   OK (Overheat limit at:  110.0)
+INFO :   LTM4633 temp B:  53.6 degC   OK (Overheat limit at:  110.0)
+INFO :        ADC1 temp:  65.0 degC   OK (Overheat limit at:  110.0)
+INFO :        ADC2 temp:  65.2 degC   OK (Overheat limit at:  110.0)
+INFO : PCB temp: 51.25
+INFO : Communication interface: PCIe (Link negotiated as x08g02)
+INFO : Physical interface     : PCIe or PXIe
+INFO : Attempting to change clock source to: 0
+INFO : (ADQGen7_PLL::VerifyPLL2Lock:297) : PLL2 signaled lock detect.
+INFO : FPGA JESD204B IP sysref captured and sync achieved.
+INFO : ADC 1 received SYSREF, setup and hold are OK.
+INFO : ADC 2 received SYSREF, setup and hold are OK.
+ERROR: (ADQ::GetAcquired:520) : This function is not supported by the device.
+ERROR: (ADQ::GetAcquired:520) : This function is not supported by the device.
+ERROR: (ADQ::GetAcquired:520) : This function is not supported by the device.
+ERROR: (ADQ::GetAcquired:520) : This function is not supported by the device.
+ERROR: (ADQ::GetAcquired:520) : This function is not supported by the device.
+ERROR: (ADQ::GetAcquired:520) : This function is not supported by the device.
+ERROR: (ADQ::GetAcquired:520) : This function is not supported by the device.
+ERROR: (ADQ::GetAcquired:520) : This function is not supported by the device.
+ERROR: (ADQ::GetAcquired:520) : This function is not supported by the device.
+ERROR: (ADQ::GetAcquired:520) : This function is not supported by the device.
+--------------------------
+End of Log Session for ADQ
+--------------------------
