@@ -27,7 +27,7 @@ class channel_setup:
   record_variable_length          = 1
   nof_pretrigger_samples          = 0
   nof_moving_average_samples      = 0
-  moving_average_delay            = 0    
+  moving_average_delay            = 0
   samples_per_record              = 1024
   # = Record size if record_variable_length is 0
   trailing_edge_window            = samples_per_record
@@ -40,16 +40,17 @@ class acquisition_setup:
 # Define the record header struct
 class HEADER(ct.Structure):
   _fields_ = [("RecordStatus", ct.c_ubyte),
-              ("UserID", ct.c_ubyte),      
-              ("Channel", ct.c_ubyte),     
+              ("UserID", ct.c_ubyte),
+              ("Channel", ct.c_ubyte),
               ("DataFormat", ct.c_ubyte),
               ("SerialNumber", ct.c_uint32),
               ("RecordNumber", ct.c_uint32),
               ("SamplePeriod", ct.c_int32),
-              ("Timestamp", ct.c_int64),   
-              ("RecordStart", ct.c_int64), 
+              ("Timestamp", ct.c_int64),
+              ("RecordStart", ct.c_int64),
               ("RecordLength", ct.c_uint32),
-              ("Reserved", ct.c_uint32)]
+              ("MovingAverage", ct.c_int16),
+              ("GateCounter", ct.c_uint16)]
 
 # This function loads the ADQAPI library using ctypes
 def adqapi_load():
@@ -57,16 +58,16 @@ def adqapi_load():
         ADQAPI = ct.cdll.LoadLibrary('ADQAPI.dll')
     else:
         ADQAPI = ct.cdll.LoadLibrary('libadq.so')
-            
+
     # Manually set return type from some ADQAPI functions
     ADQAPI.CreateADQControlUnit.restype = ct.c_void_p
     ADQAPI.ADQ_GetRevision.restype = ct.c_void_p
     ADQAPI.ADQ_GetPtrStream.restype = ct.POINTER(ct.c_int16)
     ADQAPI.ADQControlUnit_FindDevices.argtypes = [ct.c_void_p]
-            
+
     # Print ADQAPI revision
-    print('ADQAPI loaded, revision {:d}.'.format(ADQAPI.ADQAPI_GetRevision()))            
-            
+    print('ADQAPI loaded, revision {:d}.'.format(ADQAPI.ADQAPI_GetRevision()))
+
     return ADQAPI
 
 # This function unloads the ADQAPI library using ctypes
@@ -74,13 +75,13 @@ def adqapi_unload(ADQAPI):
     if os.name == 'nt':
         # Unload DLL
         ct.windll.kernel32.FreeLibrary(ADQAPI._handle)
-    
+
 # Convenience function when printing status from ADQAPI functions
 def adq_status(status):
   if (status==0):
     return 'FAILURE'
   else:
-    return 'OK'    
+    return 'OK'
 
 # Print revision info for an ADQ device
 def print_adq_device_revisions(ADQAPI, adq_cu, adq_num):
@@ -103,7 +104,7 @@ def print_adq_device_revisions(ADQAPI, adq_cu, adq_num):
 # This function sets an alternating background color for a matplotlib plot
 def alternate_background(ax, start_point, widths, labels=False,
                          color='#dddddd'):
-                             
+
     ax.relim()
     # update ax.viewLim using the new dataLim
     ax.autoscale_view()
@@ -154,7 +155,7 @@ def print_event_counters(adqapi, adq_cu, adq_num):
   acq_tevent_ctr  = ct.c_uint()
   acq_revent_ctr  = ct.c_uint()
   acq_revent_pt_ctr  = ct.c_uint()
-  status = adqapi.ADQ_PDGetEventCounters(adq_cu, adq_num, 
+  status = adqapi.ADQ_PDGetEventCounters(adq_cu, adq_num,
                                          ct.byref(lt_tevent_ctr),
                                          ct.byref(lt_revent_ctr),
                                          ct.byref(ul_tevent_ctr),

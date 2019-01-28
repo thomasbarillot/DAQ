@@ -1,6 +1,7 @@
 import scipy.io as sio
 
 import pyqtgraph as pg
+
 from pyqtgraph.Qt import QtCore, QtGui, uic
 import numpy as np
 import sys
@@ -37,7 +38,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         
 # Load an instance of the Digitizer control object
          
-         
+
 
 # Load the ui file for GUI
          QtGui.QMainWindow.__init__(self)
@@ -46,38 +47,64 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
          
          
 # Window for real time streaming
-         
-         self.streamwindow=pg.LayoutWidget()
+         pg.setConfigOption('background','w')
+         pg.setConfigOption('foreground','k')
+         self.pen=pg.mkPen(color=(0,0,0))
+         self.pen2=pg.mkPen(color=(255,0,0))
+         #self.pen=pg.mkPen(1)
+         #self.streamwindow=pg.LayoutWidget()
          self.plotchannels = pg.GraphicsLayoutWidget()
-         self.streamwindow.addWidget(self.plotchannels,row=0,col=0,rowspan=1,colspan=1)
+         self.StreamWindow.addWidget(self.plotchannels,row=0,col=0,rowspan=1,colspan=1)
          
          
          self.plt_chA =self.plotchannels.addPlot(row=0,col=0)
          self.plt_chA.setLabel(axis='left',text='Signal')
-         self.plt_chA.setLabel(axis='bottom',text='Tof (ns)')
+         self.plt_chA.setLabel(axis='bottom',text='Tof (x0.5ns)')
+         self.plt_chA.showGrid(1,1,alpha=0.5)
         
          self.plt_chB =self.plotchannels.addPlot(row=1,col=0)
          self.plt_chB.setLabel(axis='left',text='Signal')
-         self.plt_chB.setLabel(axis='bottom',text='Tof (ns)')
-         self.streamwindow.show()
+         self.plt_chB.setLabel(axis='bottom',text='Tof (x0.5ns)')
+         self.plt_chB.showGrid(1,1,alpha=0.5)
+         #self.streamwindow.show()
 
-## Link the buttons
-         
-         self.RecMode_button.clicked.connect(self.setAcquisitionParameters)
+#Digitizer stream parameters
+
+         self.StartStream_button.clicked.connect(self.StartStream)
+         self.StopStream_button.clicked.connect(self.StopStream)
+         self.SignalThresh_button.valueChanged.connect(self.setAcquisitionParameters)
+
+
+# Digitizer record parameters
+        
          self.RecSS_button.clicked.connect(self.setAcquisitionParameters)
          self.RecAvg_button.clicked.connect(self.setAcquisitionParameters)
-         
-# Digitizer record parameters
+         self.progress=0.0
+
 
          self.Nsamples_button.valueChanged.connect(self.setAcquisitionParameters)
-         self.Nrecords_button.valueChanged.connect(self.setAcquisitionParameters)
+         self.Nseconds_button.valueChanged.connect(self.setAcquisitionParameters)
+         self.Reprate_button.activated.connect(self.setAcquisitionParameters)
          
          self.ChA_button.clicked.connect(self.setAcquisitionParameters)
          self.ChB_button.clicked.connect(self.setAcquisitionParameters)
          
-         self.TrigExt_button.clicked.connect(self.setAcquisitionParameters)
-         self.TrigA_button.clicked.connect(self.setAcquisitionParameters)
-         self.TrigB_button.clicked.connect(self.setAcquisitionParameters)
+         self.TrigExt_button.clicked.connect(self.setTriggerSourceExt)
+         self.TrigA_button.clicked.connect(self.setTriggerSourceChA)
+         self.TrigB_button.clicked.connect(self.setTriggerSourceChB)
+         
+         self.TrigExtLvl_button.valueChanged.connect(self.setAcquisitionParameters)
+         
+         self.VrangeA_button.valueChanged.connect(self.setAcquisitionParameters)
+         self.VrangeB_button.valueChanged.connect(self.setAcquisitionParameters)
+        
+         self.VbiasA_button.valueChanged.connect(self.setAcquisitionParameters)
+         self.VbiasB_button.valueChanged.connect(self.setAcquisitionParameters)
+         
+         self.PretriggerVal_button.valueChanged.connect(self.setAcquisitionParameters)
+         self.HoldoffVal_button.valueChanged.connect(self.setAcquisitionParameters)
+         
+         self.RecRef_button.clicked.connect(self.SaveTrace)
          
 # Metadata record parameters
          # Voltages
@@ -101,7 +128,6 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
          # Comments on the scan
          self.Comments_button.textChanged.connect(self.setMetadata)
          
-         
 # Path for file saving
          self.FilePath_button.textChanged.connect(self.setAcquisitionParameters)
          self.FilePath='L:/atto/labdata/2016/20160411_Isopropanol'
@@ -118,15 +144,19 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
          self.DelayfileBrowser_button.clicked.connect(self.setDelayfile)
 
 # Start/Stop
-         self.StartStream_button.clicked.connect(self.StartStream)
-         self.StopStream_button.clicked.connect(self.StopStream)
          
          
-         self.data_chA = np.zeros((self.Nsamples_button.value()),dtype=np.int16)
-         self.data_chB = np.zeros((self.Nsamples_button.value()),dtype=np.int16)
+         
+         self.data_chA = np.zeros((self.Nsamples_button.value()),dtype=np.int64)
+         self.data_chB = np.zeros((self.Nsamples_button.value()),dtype=np.int64)
+         
+         self.SavedData_chA = np.zeros((self.Nsamples_button.value()),dtype=np.int64)
+         self.SavedData_chB = np.zeros((self.Nsamples_button.value()),dtype=np.int64)
 
          self.StartAcq_button.clicked.connect(self.StartAcquisition)
          self.StopAcq_button.clicked.connect(self.StopAcquisition)
+         self.AcqStart=0
+         
          print 'GUI loaded'
          f.write('GUI loaded')
          
@@ -140,16 +170,26 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
          print 'init digitizer done'
 
     def __del__(self):
-        self.TAQD.__del__()
+        self.myTAQD.__del__()
         
     def setAcquisitionParameters(self):
         f.write('Callback set Acq Param\n')
         ParametersArray=[]
 
         N_SAMPLES=self.Nsamples_button.value()
-        N_RECORDS=self.Nrecords_button.value()
+        #reset the array size in memory
+        self.data_chA = np.zeros((N_SAMPLES),dtype=np.int64)
+        self.data_chB = np.zeros((N_SAMPLES),dtype=np.int64)
+        self.SavedData_chA = np.zeros((N_SAMPLES),dtype=np.int64)
+        self.SavedData_chB = np.zeros((N_SAMPLES),dtype=np.int64)
+        
+        N_RECORDS=self.Nseconds_button.value()*int(self.Reprate_button.currentText())*1000
         ParametersArray.append(N_SAMPLES)
         ParametersArray.append(N_RECORDS)
+        
+        
+        SIGTHRESH=self.SignalThresh_button.value()
+        self.myTAQD.setSignalThreshold(SIGTHRESH)
 
         REC_CHA=0
         REC_CHB=1
@@ -167,17 +207,14 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         TRIG_CHA=3
         TRIG_CHB=3
         if (self.TrigExt_button.isChecked()==True):
-            self.TrigA_button.setChecked(False)
-            self.TrigB_button.setChecked(False)
             ParametersArray.append(TRIG_EXT)
         elif (self.TrigA_button.isChecked()==True):
-            self.TrigExt_button.setChecked(False)
-            self.TrigB_button.setChecked(False)
             ParametersArray.append(TRIG_CHA)
         elif (self.TrigB_button.isChecked()==True):
-            self.TrigA_button.setChecked(False)
-            self.TrigExt_button.setChecked(False)
             ParametersArray.append(TRIG_CHB)
+        
+        TRIGLVL=self.TrigExtLvl_button.value()
+        self.myTAQD.setExtTriggerlevel(TRIGLVL)
 
         DSCAN_ON=1
         DSCAN_OFF=0
@@ -209,11 +246,59 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
             ParametersArray.append(np.fliplr(self.Delayfile)[0])
         elif self.Delayfile_button.checkState()==0:
             ParametersArray.append([])
-
+            
+        #Voltage range and bias setup
+        VRANGE_CHA=self.VrangeA_button.value()
+        print VRANGE_CHA
+        VRANGE_CHB=self.VrangeB_button.value()
+        ParametersArray.append(VRANGE_CHA)
+        ParametersArray.append(VRANGE_CHB)
+        
+        VBIAS_CHA=self.VbiasA_button.value()
+        VBIAS_CHB=self.VbiasB_button.value()
+        ParametersArray.append(VBIAS_CHA)
+        ParametersArray.append(VBIAS_CHB)
+        
+        #Pretrigger and hold off
+        PRETRIGGER=self.PretriggerVal_button.value()
+        HOLDOFF=self.HoldoffVal_button.value()
+        if self.Pretrigger_button.checkState()==2:
+            ParametersArray.append(PRETRIGGER)
+        else:
+            ParametersArray.append(0)
+        if self.Holdoff_button.checkState()==2:
+            ParametersArray.append(HOLDOFF)
+        else:
+            ParametersArray.append(0)
+        
+        
+        #Record the file save path
         self.FilePath=self.FilePath_button.text()
-        f.write('Call Digit parameters setup,lenght param: %i\n' % len(ParametersArray))
+        
+        #Load the parameters on the acquisition card
+        f.write('Call Digit parameters setup,length param: %i\n' % len(ParametersArray))
         self.myTAQD.setDigitizerParameters(ParametersArray)
         f.write('Call Digit parameters done\n')
+        
+        
+    def setTriggerSourceExt(self):
+            self.TrigExt_button.setChecked(True)
+            self.TrigA_button.setChecked(False)
+            self.TrigB_button.setChecked(False)
+            self.setAcquisitionParameters  
+    def setTriggerSourceChA(self):
+            self.TrigExt_button.setChecked(False)
+            self.TrigA_button.setChecked(True)
+            self.TrigB_button.setChecked(False)
+            self.setAcquisitionParameters
+    def setTriggerSourceChB(self):
+            self.TrigExt_button.setChecked(False)
+            self.TrigA_button.setChecked(False)
+            self.TrigB_button.setChecked(True)
+            self.setAcquisitionParameters
+        
+        
+        
         
     def setDelayfile(self):
         
@@ -252,7 +337,7 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         
         self.setMetadata()
         
-        ScanParamsDict={'NRecords':self.Nrecords_button.value(), \
+        ScanParamsDict={'NRecords':self.Nseconds_button.value()*int(self.Reprate_button.currentText())*1000, \
                         'NSamples':self.Nsamples_button.value(), \
                         'Scanstart':self.DscanStart_button.value(), \
                         'Scanstop':self.DscanStop_button.value(), \
@@ -285,7 +370,10 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         
         f.write('START0\n')
         print 'START0'
-        self.myTAQD.StartRecording(directoryname)
+        self.AcqStart=1
+        thread.start_new_thread(self.myTAQD.StartRecording,(directoryname,))
+        self.timer.timeout.connect(self.UpdatePlot)
+        self.timer.start(1.0)
         print 'START1'
         f.write('START1\n')
         
@@ -295,12 +383,14 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
             #self.myTAQD.StopStream()
         #else:
         self.myTAQD.StopRecording()
+        self.timer.stop()
         f.write('STOP\n')
         print 'STOP'
         
     def StartStream(self):
         
         self.streamstatus=1
+        self.AcqStart==0
         self.myTAQD.StartStream()
         thread.start_new_thread(self.UpdateStream,())
         self.UpdatePlot
@@ -311,43 +401,45 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         
     def UpdateStream(self):
         count=0
-        tmpchA = np.zeros((self.Nsamples_button.value()),dtype=np.int16)
-        tmpchB = np.zeros((self.Nsamples_button.value()),dtype=np.int16)
+        #tmpchA = np.zeros((self.Nsamples_button.value()),dtype=np.int16)
+        #tmpchB = np.zeros((self.Nsamples_button.value()),dtype=np.int16)
         while self.streamstatus==1:
-            try:
-                data_chA,data_chB=self.myTAQD.UpdateStream()
-                if len(data_chA)==0 or len(data_chB)==0:
-                    data_chA = np.zeros((self.Nsamples_button.value()),dtype=np.int16)
-                    data_chB = np.zeros((self.Nsamples_button.value()),dtype=np.int16)
-                print 'data stream recorded'♥
-                count+=1
-                if self.streamavg_button.isChecked()==True:
-                    print 'Rec data stream avg'
-                    if count>=self.Navg_button.value():
-                        self.data_chA=tmpchA/np.float(self.Navg_button.value())
-                        self.data_chB=tmpchB/np.float(self.Navg_button.value())
-                        tmpchA = data_chA
-                        tmpchB = data_chB
-                        count=0
-                    else:
-                        tmpchA+=data_chA
-                        tmpchB+=data_chB
-
-                else:
-					self.data_chA=data_chA
-					self.data_chB=data_chB
+            
+            if self.streamavg_button.isChecked()==True:
+                self.myTAQD.UpdateStream(self.Navg_button.value())
+            else:
+                self.myTAQD.UpdateStream(1)
                 
+            self.data_chA=self.myTAQD.data_chA
+            self.data_chB=self.myTAQD.data_chB
+            count+=1
+
                 #time.sleep(0.5)
-                print 'updating the streaming'
-            except:
-                print 'error updating the streaming'
-        
+               # print 'updating the streaming'
+            #except:
+            #    print 'error updating the streaming'
         self.myTAQD.StopStream()
-    
+
+        
     def UpdatePlot(self):
+        
         try:
-            self.plt_chA.plot(self.data_chA,clear=True,autoLevels=False)
-            self.plt_chB.plot(self.data_chB,clear=True,autoLevels=False)
+            if self.AcqStart==1:
+                if self.myTAQD.progressflag==1:
+                    self.timer.stop()
+                if not np.all(self.myTAQD.data_chA==0):
+                    self.ProgressBar_button.setValue(np.round(100*self.myTAQD.progressrecords))
+                    self.plt_chA.plot(self.myTAQD.data_chA,clear=True,autoLevels=False,pen=self.pen)
+                    self.plt_chB.plot(self.myTAQD.data_chB,clear=True,autoLevels=False,pen=self.pen)
+            else:
+                self.plt_chA.plot(self.data_chA,clear=True,autoLevels=False,pen=self.pen)
+                self.plt_chB.plot(self.data_chB,clear=True,autoLevels=False,pen=self.pen)
+                
+            if self.ShowRef_button.checkState()==2:
+                self.plt_chA.plot(self.SavedData_chA,clear=False,autoLevels=False,pen=self.pen2)
+                self.plt_chB.plot(self.SavedData_chB,clear=False,autoLevels=False,pen=self.pen2)
+                
+                
         except:
             print 'error'
         #self.plt_chA.draw()
@@ -362,6 +454,10 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
             time.sleep(1.0)
             self.streamstatus=0
             self.timer.stop()
+            
+    def SaveTrace(self):
+        self.SavedData_chA = self.myTAQD.data_chA
+        self.SavedData_chB = self.myTAQD.data_chB
 
 ## Start Qt event loop unless running in interactive mode or using pyside.
 

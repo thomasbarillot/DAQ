@@ -86,10 +86,10 @@ def _get_hist_size(hist_type):
     # Lookup histogram size
     if (hist_type == 'tot'):
         # TOT histogram is 4k+3 bins
-        return 1024*16+3
+        return 1024*4+3
     if (hist_type == 'extr'):
         # TOT histogram is 16k+3 bins
-        return 1024*4+3
+        return 1024*16+3
     else:
         assert False, "Unknown hist_type {}.".format(hist_type)
 

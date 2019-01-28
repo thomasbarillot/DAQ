@@ -68,11 +68,11 @@ if n_of_ADQ > 0:
     INT_TRIG = 4
     LVL_FALLING = 0
     LVL_RISING = 1
-    trigger = EXT_TRIG_1
-    success = ADQAPI.ADQ_SetTriggerMode(adq_cu, adq_num, EXT_TRIG_1)
+    trigger = LVL_TRIG
+    success = ADQAPI.ADQ_SetTriggerMode(adq_cu, adq_num, trigger)
     if (success == 0):
         print('ADQ_SetTriggerMode failed.')
-    success = ADQAPI.ADQ_SetLvlTrigLevel(adq_cu, adq_num, -165)
+    success = ADQAPI.ADQ_SetLvlTrigLevel(adq_cu, adq_num, -100)
     if (success == 0):
         print('ADQ_SetLvlTrigLevel failed.')    
     success = ADQAPI.ADQ_SetTrigLevelResetValue(adq_cu, adq_num, 1000)
@@ -101,7 +101,7 @@ if n_of_ADQ > 0:
         print('Waiting for trigger')
 
     # Setup target buffers for data
-    max_number_of_channels = 2
+    max_number_of_channels = 4
     target_buffers=(ct.POINTER(ct.c_int16*samples_per_record*number_of_records)*max_number_of_channels)()
     for bufp in target_buffers:
         bufp.contents = (ct.c_int16*samples_per_record*number_of_records)()
@@ -118,6 +118,8 @@ if n_of_ADQ > 0:
     # Re-arrange data in numpy arrays
     data_16bit_ch0 = np.frombuffer(target_buffers[0].contents[0],dtype=np.int16)
     data_16bit_ch1 = np.frombuffer(target_buffers[1].contents[0],dtype=np.int16)
+    data_16bit_ch2 = np.frombuffer(target_buffers[2].contents[0],dtype=np.int16)
+    data_16bit_ch3 = np.frombuffer(target_buffers[3].contents[0],dtype=np.int16)
 
     # Plot data
     if True:
@@ -125,8 +127,8 @@ if n_of_ADQ > 0:
         plt.clf()
         plt.plot(data_16bit_ch0, '.-')
         plt.plot(data_16bit_ch1, '.--')
-#        plt.plot(data_16bit_ch2, '.--')
-#        plt.plot(data_16bit_ch3, '.--')
+        plt.plot(data_16bit_ch2, '.--')
+        plt.plot(data_16bit_ch3, '.--')
         
         plt.show()
 

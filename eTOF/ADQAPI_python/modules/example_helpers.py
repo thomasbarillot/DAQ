@@ -1,8 +1,5 @@
 import ctypes as ct
 import sys
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-import numpy as np
 import os
 
 # Define the record header struct
@@ -20,22 +17,30 @@ class HEADER(ct.Structure):
               ("Reserved", ct.c_uint32)]
 
 # This function loads the ADQAPI library using ctypes
-def adqapi_load():
+def adqapi_load(path='', quiet=False):
     if os.name == 'nt':
+      if path == '':
         ADQAPI = ct.cdll.LoadLibrary('ADQAPI.dll')
+      else:
+        ADQAPI = ct.cdll.LoadLibrary(path)
     else:
+      if path == '':
         ADQAPI = ct.cdll.LoadLibrary('libadq.so')
+      else:
+        ADQAPI = ct.cdll.LoadLibrary(path)
             
     # Manually set return type from some ADQAPI functions
     ADQAPI.CreateADQControlUnit.restype = ct.c_void_p
     ADQAPI.ADQ_GetRevision.restype = ct.c_void_p
     ADQAPI.ADQ_GetPtrStream.restype = ct.POINTER(ct.c_int16)
     ADQAPI.ADQControlUnit_FindDevices.argtypes = [ct.c_void_p]
+    ADQAPI.ADQ_DebugCmd.argtypes = [ct.c_void_p, ct.c_void_p, ct.c_uint32, ct.c_uint32, ct.c_uint32, ct.c_uint32, ct.c_float, ct.c_void_p, ct.c_void_p, ct.c_void_p]
     ADQAPI.ADQ_GetBoardSerialNumber.restype = ct.c_char_p
     ADQAPI.ADQ_GetBoardProductName.restype = ct.c_char_p
             
     # Print ADQAPI revision
-    print('ADQAPI loaded, revision {:d}.'.format(ADQAPI.ADQAPI_GetRevision()))            
+    if not quiet:
+      print('ADQAPI loaded, revision {:d}.'.format(ADQAPI.ADQAPI_GetRevision()))
             
     return ADQAPI
 
@@ -74,6 +79,9 @@ def print_adq_device_revisions(ADQAPI, adq_cu, adq_num):
 def alternate_background(ax, start_point, widths, labels=False,
                          color='#dddddd'):
                              
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as patches
+    import numpy as np
     ax.relim()
     # update ax.viewLim using the new dataLim
     ax.autoscale_view()

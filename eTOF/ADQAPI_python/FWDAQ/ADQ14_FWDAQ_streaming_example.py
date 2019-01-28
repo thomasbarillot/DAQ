@@ -70,6 +70,10 @@ ADQAPI.ADQ_SetClockSource(adq_cu, adq_num, ADQ_CLOCK_INT_INTREF)
 max_number_of_channels = ADQAPI.ADQ_GetNofChannels(adq_cu, adq_num)
 
 # Setup test pattern
+#     0 enables the analog input from the ADCs
+#   > 0 enables a specific test pattern
+# Note: Default is to enable a test pattern (4) and disconnect the
+#       analog inputs inside the FPGA.
 ADQAPI.ADQ_SetTestPatternMode(adq_cu, adq_num, 4)
 
 # Set trig mode
@@ -248,8 +252,8 @@ if print_headers:
         print('Channel:       {}'.format(header.Channel)) 
         print('DataFormat:    {}'.format(header.DataFormat))   
         print('RecordNumber:  {}'.format(header.RecordNumber))
-        print('Timestamp:     {} ns'.format(header.Timestamp / header.SamplePeriod))   
-        print('RecordStart:   {} ns'.format(header.RecordStart / header.SamplePeriod)) 
+        print('Timestamp:     {} ns'.format(header.Timestamp * 0.125))   
+        print('RecordStart:   {} ns'.format(header.RecordStart * 0.125)) 
         print('SamplePeriod:  {} ns'.format(header.SamplePeriod * 0.125))
         print('RecordLength:  {} ns'.format(header.RecordLength * (header.SamplePeriod* 0.125)))
         print('------------------')

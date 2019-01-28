@@ -33,8 +33,14 @@ hist_tot_norm    = True
 # Bypass calibrated gain & offset values if True
 calibrated_go = False
 
+# Enable internal trigger output
+int_trig_output = False
+
 # Enable reset of the device timestamp on external trigger edge
 ext_trig_timestamp_reset = False
+
+# Enable trigger blocking
+trigger_blocking = False
 
 # Setup pulse characterization (ONLY FWPD-PC devices)
 setup_pulse_characterization = False
@@ -89,23 +95,23 @@ acqs = acquisition_setup()
 # Collect data from all four channels
 acqs.channels_mask = 0b1111
 
-# Create settings for channels 1-4 
+# Create settings for channels 1-4
 cs_all = [channel_setup(channel) for channel in range(1, max_number_of_channels+1)]
 # Setup individual channels
 # Channel 1
-cs_all[0].trigger_level                   = 0
-cs_all[0].reset_hysteresis                = 0
+cs_all[0].trigger_level                   = 1000
+cs_all[0].reset_hysteresis                = 500
 cs_all[0].trigger_arm_hysteresis          = 500
-cs_all[0].reset_arm_hysteresis            = 500
+cs_all[0].reset_arm_hysteresis            = 0
 cs_all[0].trigger_polarity                = 1
 cs_all[0].reset_polarity                  = 0
 cs_all[0].coincidence_masking_expression  = 0b0001
-cs_all[0].number_of_records               = 10
+cs_all[0].number_of_records               = 5
 cs_all[0].record_variable_length          = 0
-cs_all[0].nof_pretrigger_samples          = 0
+cs_all[0].nof_pretrigger_samples          = 128
 cs_all[0].nof_moving_average_samples      = 0
 cs_all[0].moving_average_delay            = 0
-cs_all[0].samples_per_record              = 510
+cs_all[0].samples_per_record              = 8000
 cs_all[0].trailing_edge_window            = cs_all[0].samples_per_record
 
 if (max_number_of_channels > 1):
@@ -117,7 +123,7 @@ if (max_number_of_channels > 1):
   cs_all[1].trigger_polarity                = 1
   cs_all[1].reset_polarity                  = 0
   cs_all[1].coincidence_masking_expression  = 0b0010
-  cs_all[1].number_of_records               = 10
+  cs_all[1].number_of_records               = 0
   cs_all[1].record_variable_length          = 0
   cs_all[1].nof_pretrigger_samples          = 0
   cs_all[1].nof_moving_average_samples      = 0
@@ -159,8 +165,18 @@ if (max_number_of_channels > 2):
   cs_all[3].trailing_edge_window            = cs_all[3].samples_per_record
 ###
 
+# Setup internal trigger output
+if int_trig_output:
+  trigger_period = 200*2
+  status = ADQAPI.ADQ_SetInternalTriggerPeriod(adq_cu, adq_num, trigger_period)
+  print('ADQAPI.ADQ_SetInternalTriggerPeriod returned {}'.format(adq_status(status)))
+
+  status = ADQAPI.ADQ_SetConfigurationTrig(adq_cu, adq_num, 0x5, 75, 0)
+  print('ADQAPI.ADQ_SetConfigurationTrig returned {}'.format(adq_status(status)))
+
+# Setup timestamp reset via external trigger
 if ext_trig_timestamp_reset:
-  timestamp_reset_edge = 0 # 0: Falling, 1: Rising
+  timestamp_reset_edge = 1 # 0: Falling, 1: Rising
   timestamp_reset_mode = 0 # 0: First edge 1: Every edge
   status = ADQAPI.ADQ_SetTriggerEdge(adq_cu, adq_num, 2, timestamp_reset_edge)
   print('ADQAPI.ADQ_SetExternTrigEdge returned {}'.format(adq_status(status)))
@@ -174,13 +190,27 @@ if ext_trig_timestamp_reset:
   status = ADQAPI.ADQ_ArmTimestampSync(adq_cu, adq_num)
   print('ADQAPI.ADQ_ArmTimestampSync returned {}'.format(adq_status(status)))
 
+# Setup trigger blocking
+if trigger_blocking:
+  trigger_blocking_mode = 0 # 0: ONCE, 1: WINDOW, 2: GATE
+  trigger_blocking_source = 2 # 2: External trigger, 9: Sync input
+  trigger_blocking_window_length = 131072*2;
+
+  status = ADQAPI.ADQ_SetupTriggerBlocking(adq_cu, adq_num, trigger_blocking_mode, trigger_blocking_source, trigger_blocking_window_length)
+  print('ADQAPI.ADQ_SetupTriggerBlocking returned {}'.format(adq_status(status)))
+
+  status = ADQAPI.ADQ_DisarmTriggerBlocking(adq_cu, adq_num)
+  print('ADQAPI.ADQ_DisarmTriggerBlocking returned {}'.format(adq_status(status)))
+
+  status = ADQAPI.ADQ_ArmTriggerBlocking(adq_cu, adq_num)
+  print('ADQAPI.ADQ_ArmTriggerBlocking returned {}'.format(adq_status(status)))
 
 if not calibrated_go:
   print('Bypassing gain & offset calibration.')
   for ch in range(1,max_number_of_channels+1):
-    status = ADQAPI.ADQ_SetGainAndOffset(adq_cu, adq_num, 
-                                         128+ch, 
-                                         1024, 
+    status = ADQAPI.ADQ_SetGainAndOffset(adq_cu, adq_num,
+                                         128+ch,
+                                         1024,
                                          0)
     print('ADQ_SetGainAndOffset returned {}'.format(adq_status(status)))
 
@@ -215,6 +245,9 @@ for ts in cs_all:
                                                 ts.coincidence_masking_expression)
   print('ADQAPI.ADQ_PDSetupTriggerCoincidence returned {}'.format(adq_status(status)))
 
+# Bypass moving average
+status = ADQAPI.ADQ_PDSetupMovingAverageBypass(adq_cu, adq_num, 0, 0)
+print('ADQAPI.ADQ_PDSetupMovingAverageBypass returned {}'.format(adq_status(status)))
 
 if setup_pulse_characterization:
   for ch in range(1,max_number_of_channels+1):
@@ -254,7 +287,7 @@ data_16bit = [np.array([], dtype=np.int16),
               np.array([], dtype=np.int16),
               np.array([], dtype=np.int16)]
 
-max_number_of_records = 0
+max_number_of_records = max([cs_all[i].number_of_records for i in range(max_number_of_channels)]) + 2000
 
 for ts in cs_all:
   max_number_of_records = max(max_number_of_records, ts.number_of_records)
@@ -274,7 +307,7 @@ headerbufvp_list = [ct.cast(ct.pointer(headerbufp_list[ch]), ct.POINTER(ct.c_voi
 samples_added = (4*ct.c_uint)()
 for ind in range(len(samples_added)):
   samples_added[ind] = 0
-  
+
 headers_added = (4*ct.c_uint)()
 for ind in range(len(headers_added)):
   headers_added[ind] = 0
@@ -331,7 +364,7 @@ while (collecting(cs_all, records_completed)):
         headers_done = headers_added[ch]-1
       # Update counter counting completed records
       headers_completed[ch] += headers_done
-      
+
       # Update the number of completed records if at least one header has completed
       if (headers_done > 0):
         records_completed[ch] = headerbuf_list[ch][headers_completed[ch]-1].RecordNumber + 1
@@ -362,37 +395,50 @@ ADQAPI.ADQ_PDEnableLevelTrig(adq_cu, adq_num, 0)
 # Stop streaming
 ADQAPI.ADQ_StopStreaming(adq_cu, adq_num)
 
+if ext_trig_timestamp_reset:
+  status = ADQAPI.ADQ_DisarmTimestampSync(adq_cu, adq_num)
+  print('ADQAPI.ADQ_DisarmTimestampSync returned {}'.format(adq_status(status)))
+
+if trigger_blocking:
+  gate_count = ADQAPI.ADQ_GetTriggerBlockingGateCount(adq_cu, adq_num)
+  print('Gate count: {}'.format(gate_count))
+
+  status = ADQAPI.ADQ_DisarmTriggerBlocking(adq_cu, adq_num)
+  print('ADQAPI.ADQ_DisarmTriggerBlocking returned {}'.format(adq_status(status)))
+
 # Print recieved headers
 if print_headers:
   for ch in range(max_number_of_channels):
-    if cs_all[ch].number_of_records > 0:       
+    if cs_all[ch].number_of_records > 0:
       print('------------------')
       print('Headers channel {}'.format(ch))
       print('------------------')
       for rec in range(cs_all[ch].number_of_records):
         header = headerbuf_list[ch][rec]
-        print('RecordStatus:  {}'.format(header.RecordStatus)) 
-        print('UserID:        {}'.format(header.UserID))      
+        print('RecordStatus:  {}'.format(header.RecordStatus))
+        print('UserID:        {}'.format(header.UserID))
         print('SerialNumber:  {}'.format(header.SerialNumber))
-        print('Channel:       {}'.format(header.Channel)) 
-        print('DataFormat:    {}'.format(header.DataFormat))   
+        print('Channel:       {}'.format(header.Channel))
+        print('DataFormat:    {}'.format(header.DataFormat))
         print('RecordNumber:  {}'.format(header.RecordNumber))
-        print('Timestamp:     {} ns'.format(header.Timestamp / header.SamplePeriod))   
-        print('RecordStart:   {} ns'.format(header.RecordStart / header.SamplePeriod)) 
+        print('Timestamp:     {} ns'.format(header.Timestamp * 0.125))
+        print('RecordStart:   {} ns'.format(header.RecordStart * 0.125))
         print('SamplePeriod:  {} ns'.format(header.SamplePeriod * 0.125))
         print('RecordLength:  {} ns'.format(header.RecordLength * (header.SamplePeriod* 0.125)))
+        print('MovingAverage: {}'.format(header.MovingAverage))
+        print('GateCounter:   {}'.format(header.GateCounter))
         print('------------------')
 
 # Plot data
 if plot_data:
   for ch in range(max_number_of_channels):
-    if cs_all[ch].number_of_records > 0:        
+    if cs_all[ch].number_of_records > 0:
       widths = np.array([], dtype=np.uint32)
       record_end_offset = 0
       # Extract record lengths from headers
       for rec in range(cs_all[ch].number_of_records):
-        header = headerbuf_list[ch][rec]    
-        widths = np.append(widths, header.RecordLength) 
+        header = headerbuf_list[ch][rec]
+        widths = np.append(widths, header.RecordLength)
 
       # Get new figure
       plt.figure(ch)
@@ -404,13 +450,13 @@ if plot_data:
       # Set grid mode
       plt.grid(which='Major')
       # Mark records in plot
-      alternate_background(plt.gca(), 0, widths, labels=True)  
+      alternate_background(plt.gca(), 0, widths, labels=True)
       # Show plot
       plt.show()
-      
+
 if plot_hist:
   for ch in range(max_number_of_channels):
-    if cs_all[ch].number_of_records > 0:          
+    if cs_all[ch].number_of_records > 0:
       # Fetch histograms
       histogram_tot = hist.fetch_tot(ADQAPI, adq_cu, adq_num, ch+1)
       histogram_tot_np = np.frombuffer(histogram_tot, dtype=np.uint32)
@@ -430,7 +476,7 @@ if plot_hist:
       plt.figure(max_number_of_channels+(2*ch)+1)
       nof_extr_pulses = histogram_extr_np[-1]
       nof_extr_of_pulses = histogram_extr_np[-2]
-      nof_extr_uf_pulses = histogram_extr_np[-3]      
+      nof_extr_uf_pulses = histogram_extr_np[-3]
       if hist_extr_norm:
           histogram_extr_np = histogram_extr_np[0:-3]/nof_extr_pulses
       x_extr = ((np.arange(len(histogram_extr_np))*1024)/hist_extr_scale)-hist_extr_offset
